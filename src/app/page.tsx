@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main
@@ -32,11 +34,36 @@ export default function Home() {
         }}
       >
         <div style={{ display: "flex", gap: "1rem" }}>
-          <p style={{ margin: 0, color: "#b05555" }}>dans</p>
-          <p style={{ margin: 0, color: "#cc8844" }}>eten</p>
-          <p style={{ margin: 0, color: "#c9b536" }}>toneel</p>
-          <p style={{ margin: 0, color: "#6fa86f" }}>knutselen</p>
-          <p style={{ margin: 0, color: "#5b8fc9" }}>tekenen</p>
+          <Link
+            href="/dans"
+            style={{ margin: 0, color: "#b05555", textDecoration: "none" }}
+          >
+            dans
+          </Link>
+          <Link
+            href="/eten"
+            style={{ margin: 0, color: "#cc8844", textDecoration: "none" }}
+          >
+            eten
+          </Link>
+          <Link
+            href="/toneel"
+            style={{ margin: 0, color: "#c9b536", textDecoration: "none" }}
+          >
+            toneel
+          </Link>
+          <Link
+            href="/knutselen"
+            style={{ margin: 0, color: "#6fa86f", textDecoration: "none" }}
+          >
+            knutselen
+          </Link>
+          <Link
+            href="/tekenen"
+            style={{ margin: 0, color: "#5b8fc9", textDecoration: "none" }}
+          >
+            tekenen
+          </Link>
         </div>
         <span
           style={{
