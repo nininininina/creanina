@@ -11,12 +11,31 @@ De naam is een mix van "creatief" en "Nina".
 
 ## Belangrijk: ik bouw zelf verder
 
-Dit is met opzet nog een **lege basis-website**. Ik wil zelf stap voor stap
-beslissen hoe de site eruit gaat zien (kleuren, sfeer, opmaak, pagina's).
+Ik wil zelf stap voor stap beslissen hoe de site eruit gaat zien (kleuren,
+sfeer, opmaak, pagina's). Ik werk graag in kleine stapjes en zeg precies
+wat ik op dat moment wil veranderen (bijvoorbeeld "zet dat woord meer naar
+links" of "maak dat lijntje minder fel").
 
 **Bouw dus niet zomaar een hele website voor me.** Vraag eerst wat ik wil,
 of help me met het kleine stukje waar ik op dat moment om vraag. Ik leer
-graag al doende.
+graag al doende. Laat na een wijziging graag even zien hoe het eruitziet
+(een screenshot van de preview), want ik beslis op gevoel of het mooi is.
+
+## Wie ben ik
+
+Ik ben **Nina**, de maker van deze site. Ik ben heel creatief en hou van
+dans, eten, toneel, knutselen en tekenen. Ik vind zachte, niet te felle
+kleuren mooi (pastel, regenboog-achtig). Ik ben aan het leren en weet nog
+weinig van code en git, dus leg dingen simpel uit in het Nederlands.
+
+## Wat staat er nu op de hoofdpagina
+
+- De titel **Creanina** in een sierlijk script-lettertype (Great Vibes,
+  geladen via `next/font`), met een zacht regenboog-kleurverloop.
+- Daaronder mijn vijf hobby's op één rij — **dans, eten, toneel,
+  knutselen, tekenen** — elk in een eigen zachte kleur (rood → oranje →
+  geel → groen → blauw), met daaronder één doorlopend regenbooglijntje.
+- Daaronder een korte introtekst over wie ik ben en wat Creanina betekent.
 
 ## Hoe is het gemaakt?
 
@@ -28,7 +47,7 @@ graag al doende.
 
 De belangrijkste bestanden:
 
-- `src/app/page.tsx` — de hoofdpagina (nu alleen de titel "Creanina")
+- `src/app/page.tsx` — de hoofdpagina (titel, hobby-rij en introtekst)
 - `src/app/layout.tsx` — het omhulsel rond elke pagina (taal staat op Nederlands)
 - `src/app/globals.css` — algemene stijlen
 
