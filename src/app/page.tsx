@@ -64,6 +64,12 @@ export default function Home() {
           >
             tekenen
           </Link>
+          <Link
+            href="/over-mij"
+            style={{ margin: 0, color: "#9a7cc0", textDecoration: "none" }}
+          >
+            over mij
+          </Link>
         </div>
         <span
           style={{
@@ -71,7 +77,7 @@ export default function Home() {
             height: "2px",
             marginTop: "0.25rem",
             background:
-              "linear-gradient(90deg, #b05555, #cc8844, #c9b536, #6fa86f, #5b8fc9)",
+              "linear-gradient(90deg, #b05555, #cc8844, #c9b536, #6fa86f, #5b8fc9, #9a7cc0)",
           }}
         />
       </div>
