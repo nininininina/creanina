@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon GO</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .ui-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .top-bar {
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: all;
+        }
+
+        .player-info {
+            display: flex;
+            gap: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .info-box {
+            background: rgba(0,0,0,0.5);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pokeball-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            background: white;
+            border: 4px solid #333;
+            border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            cursor: pointer;
+            pointer-events: all;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 35px;
+            transition: transform 0.2s;
+        }
+
+        .pokeball-btn:active {
+            transform: scale(0.9);
+        }
+
+        .collection-panel {
+            position: fixed;
+            bottom: -100%;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+            transition: bottom 0.3s;
+            pointer-events: all;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .collection-panel.open {
+            bottom: 0;
+        }
+
+        .collection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .collection-header h2 {
+            color: #333;
+            font-size: 24px;
+        }
+
+        .close-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .pokemon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+        }
+
+        .pokemon-card {
+            background: #f5f5f5;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .pokemon-card .emoji {
+            font-size: 50px;
+            margin-bottom: 8px;
+        }
+
+        .pokemon-card .name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .pokemon-card .count {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .catch-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 2000;
+            pointer-events: all;
+        }
+
+        .catch-modal.active {
+            display: flex;
+        }
+
+        .pokemon-display {
+            font-size: 120px;
+            margin-bottom: 20px;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .pokemon-name {
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        .catch-btn {
+            background: linear-gradient(135deg, #ff4444, #ff6666);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255,68,68,0.4);
+            transition: transform 0.2s;
+        }
+
+        .catch-btn:active {
+            transform: scale(0.95);
+        }
+
+        .success-message {
+            color: #4CAF50;
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .player-marker {
+            width: 40px;
+            height: 40px;
+            background: #4285f4;
+            border: 4px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .player-marker::after {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border: 2px solid #4285f4;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.3;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.3;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            background: rgba(0,0,0,0.8);
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-size: 18px;
+            z-index: 3000;
+            pointer-events: all;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <div class="ui-container">
+        <div class="top-bar">
+            <div class="player-info">
+                <div class="info-box">
+                    <span>👤</span>
+                    <span id="playerName">Trainer</span>
+                </div>
+                <div class="info-box">
+                    <span>🎯</span>
+                    <span id="pokemonCount">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="pokeball-btn" onclick="toggleCollection()">
+            ⚪
+        </div>
+    </div>
+
+    <div class="collection-panel" id="collectionPanel">
+        <div class="collection-header">
+            <h2>Mijn Pokémon</h2>
+            <button class="close-btn" onclick="toggleCollection()">Sluiten</button>
+        </div>
+        <div class="pokemon-grid" id="pokemonGrid">
+            <div style="grid-column: 1/-1; text-align: center; color: #999; padding: 40px;">
+                Je hebt nog geen Pokémon gevangen! Ga naar buiten en vang je eerste Pokémon!
+            </div>
+        </div>
+    </div>
+
+    <div class="catch-modal" id="catchModal">
+        <div class="pokemon-display" id="wildPokemonEmoji"></div>
+        <div class="pokemon-name" id="wildPokemonName"></div>
+        <button class="catch-btn" onclick="catchPokemon()">VANG!</button>
+        <div class="success-message" id="successMessage">Gevangen! 🎉</div>
+    </div>
+
+    <div class="loading" id="loading">Locatie wordt geladen...</div>
+
+    <script>
+        // Pokémon database
+        const pokemonTypes = [
+            { name: 'Pikachu', emoji: '⚡', rarity: 0.3 },
+            { name: 'Bulbasaur', emoji: '🌱', rarity: 0.25 },
+            { name: 'Charmander', emoji: '🔥', rarity: 0.25 },
+            { name: 'Squirtle', emoji: '💧', rarity: 0.25 },
+            { name: 'Eevee', emoji: '🦊', rarity: 0.2 },
+            { name: 'Jigglypuff', emoji: '🎵', rarity: 0.3 },
+            { name: 'Psyduck', emoji: '🦆', rarity: 0.3 },
+            { name: 'Meowth', emoji: '🐱', rarity: 0.3 },
+            { name: 'Snorlax', emoji: '😴', rarity: 0.1 },
+            { name: 'Dragonite', emoji: '🐉', rarity: 0.05 },
+            { name: 'Magikarp', emoji: '🐟', rarity: 0.4 },
+            { name: 'Butterfree', emoji: '🦋', rarity: 0.3 },
+            { name: 'Pidgey', emoji: '🐦', rarity: 0.4 },
+            { name: 'Rattata', emoji: '🐀', rarity: 0.4 }
+        ];
+
+        let map;
+        let playerMarker;
+        let playerLocation = null;
+        let collection = {};
+        let spawnedPokemon = [];
+        let currentWildPokemon = null;
+
+        // Laad collectie uit localStorage
+        function loadCollection() {
+            const saved = localStorage.getItem('pokemonCollection');
+            if (saved) {
+                collection = JSON.parse(saved);
+                updateCollectionDisplay();
+                updatePokemonCount();
+            }
+        }
+
+        // Sla collectie op
+        function saveCollection() {
+            localStorage.setItem('pokemonCollection', JSON.stringify(collection));
+        }
+
+        // Initialize map
+        function initMap(lat, lon) {
+            map = L.map('map', {
+                zoomControl: false
+            }).setView([lat, lon], 17);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Create custom player marker
+            const playerIcon = L.divIcon({
+                className: 'player-marker',
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
+            });
+
+            playerMarker = L.marker([lat, lon], { icon: playerIcon }).addTo(map);
+
+            // Hide loading
+            document.getElementById('loading').style.display = 'none';
+
+            // Start spawning Pokemon
+            spawnPokemonAround(lat, lon);
+            setInterval(() => spawnPokemonAround(lat, lon), 30000); // Every 30 seconds
+
+            // Watch position
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(updatePosition, null, {
+                    enableHighAccuracy: true,
+                    maximumAge: 5000
+                });
+            }
+        }
+
+        function updatePosition(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            playerLocation = [lat, lon];
+            
+            if (playerMarker) {
+                playerMarker.setLatLng([lat, lon]);
+                map.setView([lat, lon], map.getZoom());
+            }
+        }
+
+        function spawnPokemonAround(lat, lon) {
+            // Spawn 3-5 Pokemon nearby
+            const count = Math.floor(Math.random() * 3) + 3;
+            
+            for (let i = 0; i < count; i++) {
+                // Random offset (approximately 50-200 meters)
+                const latOffset = (Math.random() - 0.5) * 0.003;
+                const lonOffset = (Math.random() - 0.5) * 0.003;
+                
+                const pokeLat = lat + latOffset;
+                const pokeLon = lon + lonOffset;
+
+                // Select random Pokemon based on rarity
+                const pokemon = selectRandomPokemon();
+
+                // Create Pokemon marker
+                const pokeIcon = L.divIcon({
+                    className: 'pokemon-spawn',
+                    html: `<div style="font-size: 40px; cursor: pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">${pokemon.emoji}</div>`,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20]
+                });
+
+                const marker = L.marker([pokeLat, pokeLon], { icon: pokeIcon }).addTo(map);
+                
+                // Click to encounter
+                marker.on('click', () => encounterPokemon(pokemon, marker));
+
+                spawnedPokemon.push({ marker, pokemon, timeout: setTimeout(() => {
+                    map.removeLayer(marker);
+                    spawnedPokemon = spawnedPokemon.filter(p => p.marker !== marker);
+                }, 120000) }); // Disappear after 2 minutes
+            }
+        }
+
+        function selectRandomPokemon() {
+            const rand = Math.random();
+            let cumulative = 0;
+            
+            for (const pokemon of pokemonTypes) {
+                cumulative += pokemon.rarity;
+                if (rand <= cumulative) {
+                    return pokemon;
+                }
+            }
+            
+            return pokemonTypes[0];
+        }
+
+        function encounterPokemon(pokemon, marker) {
+            currentWildPokemon = { pokemon, marker };
+            document.getElementById('wildPokemonEmoji').textContent = pokemon.emoji;
+            document.getElementById('wildPokemonName').textContent = pokemon.name;
+            document.getElementById('catchModal').classList.add('active');
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function catchPokemon() {
+            if (!currentWildPokemon) return;
+
+            const pokemon = currentWildPokemon.pokemon;
+            const marker = currentWildPokemon.marker;
+
+            // Add to collection
+            if (!collection[pokemon.name]) {
+                collection[pokemon.name] = {
+                    name: pokemon.name,
+                    emoji: pokemon.emoji,
+                    count: 0
+                };
+            }
+            collection[pokemon.name].count++;
+
+            // Save and update UI
+            saveCollection();
+            updateCollectionDisplay();
+            updatePokemonCount();
+
+            // Show success
+            document.getElementById('successMessage').style.display = 'block';
+            
+            // Remove from map
+            map.removeLayer(marker);
+            spawnedPokemon = spawnedPokemon.filter(p => p.marker !== marker);
+
+            // Close modal after 1.5 seconds
+            setTimeout(() => {
+                document.getElementById('catchModal').classList.remove('active');
+                currentWildPokemon = null;
+            }, 1500);
+        }
+
+        function updateCollectionDisplay() {
+            const grid = document.getElementById('pokemonGrid');
+            
+            if (Object.keys(collection).length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #999; padding: 40px;">Je hebt nog geen Pokémon gevangen! Ga naar buiten en vang je eerste Pokémon!</div>';
+                return;
+            }
+
+            grid.innerHTML = '';
+            
+            for (const [name, data] of Object.entries(collection)) {
+                const card = document.createElement('div');
+                card.className = 'pokemon-card';
+                card.innerHTML = `
+                    <div class="emoji">${data.emoji}</div>
+                    <div class="name">${data.name}</div>
+                    <div class="count">×${data.count}</div>
+                `;
+                grid.appendChild(card);
+            }
+        }
+
+        function updatePokemonCount() {
+            const total = Object.values(collection).reduce((sum, p) => sum + p.count, 0);
+            document.getElementById('pokemonCount').textContent = total;
+        }
+
+        function toggleCollection() {
+            document.getElementById('collectionPanel').classList.toggle('open');
+        }
+
+        // Get user location and start
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    initMap(position.coords.latitude, position.coords.longitude);
+                    loadCollection();
+                },
+                (error) => {
+                    // Fallback to default location (Amsterdam)
+                    alert('Kon je locatie niet vinden. We gebruiken een standaard locatie.');
+                    initMap(52.3676, 4.9041);
+                    loadCollection();
+                }
+            );
+        } else {
+            alert('Je browser ondersteunt geen GPS. We gebruiken een standaard locatie.');
+            initMap(52.3676, 4.9041);
+            loadCollection();
+        }
+    </script>
+</body>
+</html>

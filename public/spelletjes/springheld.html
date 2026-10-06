@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Springheld</title>
+<style>
+  :root {
+    --sky-top: #7ec8e3;
+    --sky-bot: #cdeef7;
+    --ground: #8b5a2b;
+    --grass: #5fa832;
+    --grass-dark: #4a8524;
+    --gold: #f2c94c;
+    --red: #e34a4a;
+    --white: #fff;
+    --wood: #6b4226;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    background: #1a2e1a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+    color: var(--white);
+    padding: 12px;
+    user-select: none;
+  }
+  h1 {
+    margin: 4px 0 2px 0;
+    font-size: clamp(22px, 4vw, 34px);
+    letter-spacing: 2px;
+    color: var(--gold);
+    text-shadow: 2px 2px 0 #000;
+  }
+  p.sub {
+    margin: 0 0 10px 0;
+    opacity: 0.85;
+    font-size: 14px;
+    text-align: center;
+  }
+  #gameWrap {
+    position: relative;
+    border: 6px solid var(--wood);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    cursor: pointer;
+    width: min(1300px, 98vw);
+    aspect-ratio: 16 / 7;
+  }
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+    width: 100%;
+    height: 100%;
+  }
+  #hud {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(0,0,0,0.35);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    color: var(--gold);
+    font-size: 15px;
+  }
+  #best {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.35);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  #msg {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--gold);
+    display: none;
+    white-space: nowrap;
+  }
+  #overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+    padding: 20px;
+  }
+  #overlay button {
+    background: var(--gold);
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  #overlay input {
+    font-family: inherit;
+    font-size: 15px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    width: 220px;
+    max-width: 80%;
+    text-align: center;
+  }
+  #petChoices {
+    display: flex;
+    gap: 10px;
+    margin: 4px 0 2px 0;
+  }
+  .pet-swatch {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.4);
+    cursor: pointer;
+    padding: 0;
+  }
+  .pet-swatch.selected {
+    border-color: #fff;
+    transform: scale(1.15);
+  }
+  #nameTag {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.35);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--white);
+  }
+  #controls {
+    margin-top: 12px;
+    font-size: 13px;
+    opacity: 0.85;
+    text-align: center;
+    line-height: 1.6;
+  }
+  kbd {
+    background: #333;
+    border: 1px solid #666;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: monospace;
+  }
+</style>
+</head>
+<body>
+
+<h1>🏃 SPRINGHELD 🏃</h1>
+<p class="sub">Ren door het woud, spring over takken en onder vleermuizen door!</p>
+
+<div id="gameWrap">
+  <canvas id="game" width="1300" height="570"></canvas>
+  <div id="hud">🪙 0</div>
+  <div id="best">Beste: 0</div>
+  <div id="msg"></div>
+  <div id="nameTag" style="display:none;"></div>
+  <div id="overlay">
+    <div id="profileStep">
+      <h2 style="color: var(--gold); margin:0;">Maak je held!</h2>
+      <input id="nameInput" type="text" placeholder="Jouw naam" maxlength="14">
+      <input id="passInput" type="password" placeholder="Geheim wachtwoordje" maxlength="20">
+      <p style="margin:6px 0 0 0;">Kies een kleur voor je petje:</p>
+      <div id="petChoices">
+        <button class="pet-swatch selected" style="background:#e34a4a" data-color="#e34a4a"></button>
+        <button class="pet-swatch" style="background:#4a90c9" data-color="#4a90c9"></button>
+        <button class="pet-swatch" style="background:#3ecf6a" data-color="#3ecf6a"></button>
+        <button class="pet-swatch" style="background:#f2c94c" data-color="#f2c94c"></button>
+        <button class="pet-swatch" style="background:#9b59b6" data-color="#9b59b6"></button>
+      </div>
+      <button id="profileBtn">Verder ➜</button>
+    </div>
+    <div id="instructionsStep" style="display:none;">
+      <h2 style="color: var(--gold); margin:0;">Klaar om te rennen?</h2>
+      <p style="margin:0; max-width:320px;">Spring met <b>spatie</b> of tik op het scherm. Sommige vleermuizen vlieg je onder door (duiken), over andere spring je juist heen! Ontwijk de takken en verzamel munten.</p>
+      <button id="startBtn">Start het spel</button>
+    </div>
+  </div>
+</div>
+
+<div id="controls">
+  Springen: <kbd>Spatie</kbd> of <kbd>↑</kbd> of tik/klik &nbsp;|&nbsp; Bukken: <kbd>↓</kbd>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const groundY = H - 95;
+
+let started = false;
+let gameOver = false;
+let score = 0;
+let best = 0;
+let speed = 8;
+let spawnTimer = 90;
+let elapsedFrames = 0;
+let difficultyLevel = 0;
+let bgOffset = 0;
+let coinsCollected = 0;
+let msgTimer = 0;
+let profileDone = false;
+let playerName = 'Held';
+let playerPassword = '';
+let petColor = '#e34a4a';
+
+const player = {
+  x: 130, y: groundY - 76, w: 56, h: 76,
+  vy: 0, jumping: false, ducking: false,
+  legFrame: 0, legTimer: 0
+};
+const GRAVITY = 1.25;
+const JUMP_FORCE = -24;
+
+let obstacles = []; // { type: 'branch'|'bat'|'coin', x, y, w, h, collected }
+
+function reset() {
+  score = 0;
+  speed = 8;
+  obstacles = [];
+  spawnTimer = 90;
+  elapsedFrames = 0;
+  difficultyLevel = 0;
+  player.y = groundY - 76;
+  player.vy = 0;
+  player.jumping = false;
+  player.ducking = false;
+  gameOver = false;
+  msgTimer = 0;
+  document.getElementById('msg').style.display = 'none';
+}
+
+function jump() {
+  if (!profileDone || !started) return;
+  if (gameOver) return;
+  if (!player.jumping) {
+    player.vy = JUMP_FORCE;
+    player.jumping = true;
+  }
+}
+
+function setDuck(v) {
+  if (!player.jumping) player.ducking = v;
+}
+
+document.querySelectorAll('.pet-swatch').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pet-swatch').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    petColor = btn.getAttribute('data-color');
+  });
+});
+
+document.getElementById('profileBtn').addEventListener('click', () => {
+  const nameVal = document.getElementById('nameInput').value.trim();
+  playerName = nameVal || 'Held';
+  playerPassword = document.getElementById('passInput').value;
+  profileDone = true;
+  document.getElementById('profileStep').style.display = 'none';
+  document.getElementById('instructionsStep').style.display = 'flex';
+  document.getElementById('instructionsStep').style.flexDirection = 'column';
+  document.getElementById('instructionsStep').style.alignItems = 'center';
+  document.getElementById('instructionsStep').style.gap = '10px';
+  const tag = document.getElementById('nameTag');
+  tag.textContent = '🏃 ' + playerName;
+  tag.style.display = 'block';
+});
+
+function showMsg(text, dur) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.style.display = 'block';
+  msgTimer = dur || 80;
+}
+
+window.addEventListener('keydown', e => {
+  if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+  const k = e.key.toLowerCase();
+  if (k === ' ' || k === 'arrowup') { jump(); e.preventDefault(); }
+  if (k === 'arrowdown') { setDuck(true); e.preventDefault(); }
+});
+window.addEventListener('keyup', e => {
+  if (e.key.toLowerCase() === 'arrowdown') setDuck(false);
+});
+document.getElementById('gameWrap').addEventListener('mousedown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+  jump();
+});
+document.getElementById('gameWrap').addEventListener('touchstart', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+  e.preventDefault();
+  jump();
+});
+document.getElementById('startBtn').addEventListener('click', () => {
+  started = true;
+  document.getElementById('overlay').style.display = 'none';
+});
+
+function spawnObstacle() {
+  const roll = Math.random();
+  if (roll < 0.45) {
+    // tak op de grond - spring eroverheen
+    obstacles.push({ type: 'branch', x: W + 30, y: groundY - 42, w: 50, h: 42 });
+  } else if (roll < 0.75) {
+    // vleermuis: soms laag (spring eroverheen), soms hoog (duik eronder)
+    const low = Math.random() < 0.5;
+    const by = low ? groundY - 44 : groundY - 100;
+    obstacles.push({ type: 'bat', x: W + 30, y: by, w: 56, h: 40, flap: 0 });
+  } else {
+    // muntje om te verzamelen
+    const high = Math.random() < 0.5;
+    obstacles.push({ type: 'coin', x: W + 30, y: high ? groundY - 140 : groundY - 56, w: 34, h: 34, collected: false });
+  }
+}
+
+function rectsOverlap(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+function update() {
+  if (!started || gameOver) return;
+
+  elapsedFrames++;
+  const newLevel = Math.floor(elapsedFrames / 1800); // elke 30 seconden (60fps)
+  if (newLevel > difficultyLevel) {
+    difficultyLevel = newLevel;
+    if (speed < 16) {
+      speed = Math.min(16, speed + 0.9);
+      showMsg('Level ' + (difficultyLevel + 1) + '! Iets moeilijker nu ⚡', 80);
+    }
+  }
+
+  bgOffset -= speed * 0.5;
+
+  // zwaartekracht
+  player.vy += GRAVITY;
+  player.y += player.vy;
+  if (player.y >= groundY - 76) {
+    player.y = groundY - 76;
+    player.vy = 0;
+    player.jumping = false;
+  }
+
+  player.legTimer++;
+  if (player.legTimer > 6) { player.legFrame = (player.legFrame+1)%2; player.legTimer = 0; }
+
+  // obstakels
+  spawnTimer--;
+  if (spawnTimer <= 0) {
+    spawnObstacle();
+    const easeGap = Math.max(0, 3 - difficultyLevel) * 20; // extra ruimte aan het begin, minder na elke 30s
+    spawnTimer = 55 + Math.random()*45 - Math.min(speed*3, 40) + easeGap;
+  }
+
+  const ph = player.ducking ? 42 : player.h;
+  const py = player.ducking ? player.y + (player.h - 42) : player.y;
+  const pRect = { x: player.x+4, y: py+2, w: player.w-8, h: ph-4 };
+
+  obstacles.forEach(o => {
+    o.x -= speed;
+    if (o.type === 'bat') o.flap += 0.2;
+    if (o.type === 'coin' && !o.collected && rectsOverlap(pRect, o)) {
+      o.collected = true;
+      coinsCollected++;
+      document.getElementById('hud').textContent = '🪙 ' + coinsCollected;
+    }
+    if ((o.type === 'branch' || o.type === 'bat') && rectsOverlap(pRect, o)) {
+      gameOver = true;
+      best = Math.max(best, Math.floor(score));
+      document.getElementById('best').textContent = 'Beste: ' + best;
+    }
+  });
+  obstacles = obstacles.filter(o => o.x + o.w > -10);
+
+  score += speed * 0.05;
+
+  if (msgTimer > 0) {
+    msgTimer--;
+    if (msgTimer === 0) document.getElementById('msg').style.display = 'none';
+  }
+}
+
+function drawBackground() {
+  // lucht
+  const grad = ctx.createLinearGradient(0,0,0,groundY);
+  grad.addColorStop(0, '#7ec8e3');
+  grad.addColorStop(1, '#cdeef7');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,groundY);
+
+  // verre bomen (parallax)
+  ctx.fillStyle = 'rgba(90,140,80,0.5)';
+  for (let i=0;i<10;i++) {
+    let x = ((i*220 + bgOffset*0.5) % (W+220)) - 110;
+    ctx.beginPath();
+    ctx.arc(x, groundY-95, 55, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // grond
+  ctx.fillStyle = '#8b5a2b';
+  ctx.fillRect(0, groundY, W, H-groundY);
+  ctx.fillStyle = '#5fa832';
+  ctx.fillRect(0, groundY, W, 16);
+  // strepen op gras voor beweging
+  ctx.fillStyle = '#4a8524';
+  for (let i=0;i<30;i++) {
+    let x = ((i*60 + bgOffset*2) % (W+60)) - 30;
+    ctx.fillRect(x, groundY+3, 30, 6);
+  }
+}
+
+function drawPlayer() {
+  const p = player;
+  const duck = p.ducking && !p.jumping;
+  const h = duck ? 42 : p.h;
+  const y = duck ? p.y + (p.h - 42) : p.y;
+  const cx = p.x + p.w/2;
+  const headR = duck ? 15 : 19;
+  const headCy = y + headR + 2;
+  const bodyTop = headCy + headR - 4;
+  const bodyBottom = y + h;
+
+  ctx.save();
+
+  // schaduw op de grond
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(cx, groundY + 6, 22, 6, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // been-animatie (achter het lichaam getekend)
+  ctx.fillStyle = '#3a2a1a';
+  if (!p.jumping && !duck) {
+    if (p.legFrame === 0) {
+      roundRect(p.x+8, bodyBottom-6, 12, 16, 5); ctx.fill();
+      roundRect(p.x+p.w-20, bodyBottom-12, 12, 22, 5); ctx.fill();
+    } else {
+      roundRect(p.x+8, bodyBottom-12, 12, 22, 5); ctx.fill();
+      roundRect(p.x+p.w-20, bodyBottom-6, 12, 16, 5); ctx.fill();
+    }
+  } else {
+    roundRect(p.x+8, bodyBottom-6, 12, 16, 5); ctx.fill();
+    roundRect(p.x+p.w-20, bodyBottom-6, 12, 16, 5); ctx.fill();
+  }
+
+  // schoentjes
+  ctx.fillStyle = '#3d2a14';
+  ctx.beginPath(); ctx.ellipse(p.x+14, bodyBottom+11, 9, 6, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(p.x+p.w-14, bodyBottom+11, 9, 6, 0, 0, Math.PI*2); ctx.fill();
+
+  // lichaam (tuniek) met rondere vorm
+  const bodyGrad = ctx.createLinearGradient(0, bodyTop, 0, bodyBottom);
+  bodyGrad.addColorStop(0, '#f0605c');
+  bodyGrad.addColorStop(1, '#d43f3f');
+  ctx.fillStyle = bodyGrad;
+  roundRect(p.x, bodyTop, p.w, bodyBottom - bodyTop, 10);
+  ctx.fill();
+
+  // riem
+  ctx.fillStyle = '#8b5a2b';
+  ctx.fillRect(p.x+2, bodyTop + (bodyBottom-bodyTop)*0.55, p.w-4, 6);
+  ctx.fillStyle = '#f2c94c';
+  ctx.fillRect(cx-4, bodyTop + (bodyBottom-bodyTop)*0.55, 8, 6);
+
+  // armpjes
+  ctx.fillStyle = '#f0605c';
+  const armSwing = (!p.jumping && !duck) ? (p.legFrame === 0 ? -6 : 6) : 0;
+  ctx.beginPath(); ctx.ellipse(p.x-2, bodyTop+10+armSwing, 6, 10, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(p.x+p.w+2, bodyTop+10-armSwing, 6, 10, 0, 0, Math.PI*2); ctx.fill();
+
+  // hoofd
+  ctx.fillStyle = '#fbd7a1';
+  ctx.beginPath();
+  ctx.arc(cx, headCy, headR, 0, Math.PI*2);
+  ctx.fill();
+
+  // blosjes
+  ctx.fillStyle = 'rgba(233,120,110,0.45)';
+  ctx.beginPath(); ctx.arc(cx-headR*0.55, headCy+headR*0.25, headR*0.22, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+headR*0.55, headCy+headR*0.25, headR*0.22, 0, Math.PI*2); ctx.fill();
+
+  // ogen
+  ctx.fillStyle = '#2b2018';
+  ctx.beginPath(); ctx.arc(cx-headR*0.4, headCy-headR*0.05, 2.6, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+headR*0.4, headCy-headR*0.05, 2.6, 0, Math.PI*2); ctx.fill();
+
+  // glimlach
+  ctx.strokeStyle = '#8a5a3a';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, headCy+headR*0.15, headR*0.4, 0.15*Math.PI, 0.85*Math.PI);
+  ctx.stroke();
+
+  // haar + bandana
+  ctx.fillStyle = '#5a3a1a';
+  ctx.beginPath();
+  ctx.arc(cx, headCy, headR, Math.PI, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = petColor;
+  ctx.fillRect(cx-headR, headCy-headR*0.55, headR*2, headR*0.4);
+  ctx.beginPath();
+  ctx.moveTo(cx+headR-2, headCy-headR*0.35);
+  ctx.lineTo(cx+headR+8, headCy-headR*0.15);
+  ctx.lineTo(cx+headR-2, headCy-headR*0.1);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+
+function drawObstacles() {
+  obstacles.forEach(o => {
+    if (o.type === 'branch') {
+      ctx.fillStyle = '#6b4226';
+      ctx.fillRect(o.x, o.y, o.w, o.h);
+      ctx.fillStyle = '#8b5a2b';
+      ctx.fillRect(o.x+6, o.y-10, 9, 13);
+      ctx.fillRect(o.x+25, o.y-13, 9, 16);
+    } else if (o.type === 'bat') {
+      const flap = Math.sin(o.flap) * 13;
+      ctx.fillStyle = '#4a3a5a';
+      ctx.beginPath();
+      ctx.ellipse(o.x+o.w/2, o.y+o.h/2, 13, 10, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(o.x+o.w/2-6, o.y+o.h/2);
+      ctx.lineTo(o.x-10, o.y+o.h/2-flap);
+      ctx.lineTo(o.x+o.w/2-10, o.y+o.h/2+6);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(o.x+o.w/2+6, o.y+o.h/2);
+      ctx.lineTo(o.x+o.w+10, o.y+o.h/2-flap);
+      ctx.lineTo(o.x+o.w/2+10, o.y+o.h/2+6);
+      ctx.fill();
+    } else if (o.type === 'coin' && !o.collected) {
+      ctx.fillStyle = '#f2c94c';
+      ctx.beginPath();
+      ctx.arc(o.x+o.w/2, o.y+o.h/2, o.w/2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = '#c99a2c';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  });
+}
+
+function drawScore() {
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.fillRect(W-170, 14, 150, 38);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 20px Trebuchet MS';
+  ctx.textAlign = 'right';
+  ctx.fillText('Score: ' + Math.floor(score), W-24, 40);
+}
+
+function draw() {
+  drawBackground();
+  drawObstacles();
+  drawPlayer();
+  drawScore();
+}
+
+function loop() {
+  update();
+  draw();
+
+  if (gameOver) {
+    const ov = document.getElementById('overlay');
+    if (ov.style.display === 'none') {
+      ov.style.display = 'flex';
+      ov.innerHTML = `<h2 style="color:var(--red); margin:0;">Oeps, geraakt!</h2>
+        <p>Score: ${Math.floor(score)} &nbsp;|&nbsp; Munten: ${coinsCollected}</p>
+        <button id="restartBtn">Nog een keer!</button>`;
+      document.getElementById('restartBtn').addEventListener('click', () => {
+        reset();
+        ov.style.display = 'none';
+      });
+    }
+  }
+
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>

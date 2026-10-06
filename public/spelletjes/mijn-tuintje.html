@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Mijn Tuintje</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    font-family: 'Baloo 2', 'Comic Sans MS', 'Trebuchet MS', sans-serif;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Quicksand:wght@500;600;700&display=swap');
+
+  body {
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: linear-gradient(180deg, #7ec8f2 0%, #bfe6fb 32%, #d9f4c4 33%, #a9dd6e 62%, #7fc24a 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 18px 12px 40px;
+  }
+
+  /* --- decor: sun, clouds, hills, butterflies --- */
+  .sun { position: absolute; top: 18px; left: 26px; font-size: 64px; filter: drop-shadow(0 0 18px #fff3a0); animation: sunspin 20s linear infinite; z-index: 0; }
+  @keyframes sunspin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+  .cloud-deco { position: absolute; font-size: 46px; opacity: 0.9; z-index: 0; animation: drift 60s linear infinite; }
+  .cloud-deco.c1 { top: 40px; animation-duration: 55s; }
+  .cloud-deco.c2 { top: 90px; font-size: 34px; animation-duration: 75s; animation-delay: -20s; }
+  @keyframes drift { from { left: -120px; } to { left: 110%; } }
+  .hill { position: absolute; bottom: 0; width: 340px; height: 130px; background: #93cf5c; border-radius: 50% 50% 0 0 / 100% 100% 0 0; z-index: 0; opacity: 0.55; }
+  .hill.h1 { left: -80px; }
+  .hill.h2 { right: -100px; width: 260px; height: 100px; background: #86c24e; }
+  .bug { position: absolute; font-size: 20px; z-index: 1; pointer-events: none; animation: flutter 9s ease-in-out infinite; }
+  @keyframes flutter { 0%{transform:translate(0,0) rotate(0deg);} 25%{transform:translate(30px,-18px) rotate(10deg);} 50%{transform:translate(60px,4px) rotate(-8deg);} 75%{transform:translate(30px,-14px) rotate(6deg);} 100%{transform:translate(0,0) rotate(0deg);} }
+  .rain-cloud { position: absolute; top: 36px; left: -220px; font-size: 52px; opacity: 0; pointer-events: none; z-index: 6; filter: drop-shadow(0 6px 6px rgba(0,0,0,0.15)); }
+
+  .hidden { display: none !important; }
+
+  /* --- main menu --- */
+  #screen-menu {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column; align-items: center;
+    margin-top: 30px;
+  }
+  .menu-card {
+    background: linear-gradient(180deg, #fff9e6, #fdf0c8);
+    border: 5px solid #7a4a1e;
+    border-radius: 26px;
+    padding: 30px 34px 26px;
+    text-align: center;
+    box-shadow: 0 8px 0 #6b3f19, 0 10px 20px rgba(0,0,0,0.2);
+    max-width: 360px;
+  }
+  .menu-card .big-emoji { font-size: 60px; animation: bob 2.4s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .menu-card h1 {
+    font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 30px;
+    color: #6b4300; margin: 6px 0 4px; text-shadow: 1px 1px 0 #fff2c9;
+  }
+  .menu-card p { color: #8a6a2a; font-family: 'Quicksand', sans-serif; font-weight: 600; margin: 0 0 20px; }
+  .play-btn {
+    font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 20px;
+    color: #fff; background: linear-gradient(180deg, #8ed467, #5fa838);
+    border: 3px solid #3d7a24; border-radius: 999px;
+    padding: 14px 38px; cursor: pointer;
+    box-shadow: 0 5px 0 #2f5d18;
+    transition: transform 0.12s;
+  }
+  .play-btn:hover { transform: translateY(-2px); }
+  .play-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #2f5d18; }
+  .menu-stats {
+    margin-top: 18px; display: flex; gap: 14px; justify-content: center;
+    font-family: 'Quicksand', sans-serif; font-weight: 700; font-size: 13px; color: #7a5300;
+  }
+  .menu-stats span { background: #ffedc4; border: 2px solid #d9a52a; border-radius: 12px; padding: 6px 10px; }
+
+  /* --- header (game screen) --- */
+  .sign {
+    position: relative; z-index: 2;
+    background: linear-gradient(180deg, #c98d52, #a9713f);
+    border: 4px solid #7a4a1e; border-radius: 18px;
+    padding: 8px 26px;
+    box-shadow: 0 6px 0 #6b3f19, 0 8px 14px rgba(0,0,0,0.15);
+    margin-top: 4px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .menu-return {
+    background: #ffedc4; border: 2px solid #7a4a1e; border-radius: 10px;
+    font-size: 20px; padding: 4px 9px; cursor: pointer;
+  }
+  h1 { margin: 0; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 26px; color: #fff6df; text-shadow: 2px 2px 0 #6b3f19; text-align: center; }
+
+  #topbar {
+    position: relative; z-index: 2;
+    display: flex; gap: 10px; align-items: center;
+    background: #fff9e6; padding: 7px 16px; border-radius: 999px;
+    border: 3px solid #f0c14b; margin: 12px 0 4px;
+    font-weight: 700; color: #7a5300; font-size: 16px;
+    box-shadow: 0 3px 0 #e0aa2e;
+  }
+  .coin-icon { display:inline-block; animation: coinbob 1.6s ease-in-out infinite; }
+  @keyframes coinbob { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-3px) rotate(10deg)} }
+  #coins { color: #b5700a; }
+  .coin-pop { position: absolute; font-weight: 800; color: #b5700a; font-size: 14px; animation: coinpop 0.9s ease-out forwards; pointer-events: none; }
+  @keyframes coinpop { 0%{transform:translateY(0); opacity:1} 100%{transform:translateY(-26px); opacity:0} }
+
+  /* --- nav tabs --- */
+  #navtabs { position: relative; z-index: 2; display: flex; gap: 8px; margin: 10px 0 14px; }
+  .navtab {
+    font-family: 'Quicksand', sans-serif; font-weight: 700; font-size: 13px;
+    padding: 8px 14px; border-radius: 14px; border: 2.5px solid #7a4a1e;
+    background: #ffedc4; color: #6b4300; cursor: pointer;
+  }
+  .navtab.active { background: #7bc45a; color: #fff; border-color: #3d7a24; }
+
+  /* --- tools --- */
+  #tools { position: relative; z-index: 2; display: flex; gap: 12px; margin: 4px 0 16px; flex-wrap: wrap; justify-content: center; }
+  .tool-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700;
+    padding: 8px 16px 7px; border-radius: 16px; border: 3px solid #7a4a1e;
+    background: #ffedc4; color: #6b4300; cursor: pointer;
+    box-shadow: 0 4px 0 #b98a3f; transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .tool-btn .icon { font-size: 26px; }
+  .tool-btn:hover { transform: translateY(-2px); }
+  .tool-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #b98a3f; }
+  .tool-btn.active { background: #7bc45a; color: #fff; border-color: #3d7a24; box-shadow: 0 4px 0 #2f5d18; }
+
+  /* --- garden fence + bed --- */
+  #garden-wrap {
+    position: relative; z-index: 2; padding: 16px; border-radius: 22px;
+    background: repeating-linear-gradient(90deg, #c9a066 0 14px, #b8905a 14px 28px);
+    border: 5px solid #7a4a1e; box-shadow: 0 8px 0 #6b3f19, 0 10px 18px rgba(0,0,0,0.18);
+  }
+  #garden {
+    display: grid; grid-template-columns: repeat(3, 112px); gap: 14px;
+    background: #6fa83e; padding: 16px; border-radius: 16px;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(255,255,255,0.12) 3px, transparent 4px),
+      radial-gradient(circle at 70% 65%, rgba(255,255,255,0.10) 3px, transparent 4px),
+      radial-gradient(circle at 40% 85%, rgba(255,255,255,0.10) 3px, transparent 4px);
+  }
+
+  /* --- decor shelf below garden --- */
+  #decor-shelf {
+    position: relative; z-index: 2; margin-top: 10px;
+    display: flex; gap: 10px; min-height: 40px; align-items: flex-end;
+    background: #588a34; border-radius: 12px; padding: 8px 14px;
+    border: 3px solid #3d6a20;
+  }
+  #decor-shelf .decor-item { font-size: 26px; }
+  #decor-shelf .decor-empty { color: #d8f0b8; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; }
+
+  /* --- plot / pot --- */
+  .plot { width: 112px; height: 138px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; position: relative; cursor: pointer; user-select: none; }
+  .plot:active .pot { transform: scale(0.95); }
+  .empty-hole { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border: 3px dashed #4f7d2a; border-radius: 10px; background: #628f39; }
+  .plus-icon { font-size: 30px; color: #d8f0b8; opacity: 0.9; }
+  .chest-icon { font-size: 38px; animation: chestpulse 1s ease-in-out infinite; }
+  @keyframes chestpulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+
+  .plant-emoji { font-size: 40px; margin-bottom: -6px; z-index: 2; transition: transform 0.35s ease; filter: drop-shadow(0 3px 2px rgba(0,0,0,0.18)); }
+  .plant-emoji.grown { animation: growpop 0.5s ease; }
+  @keyframes growpop { 0%{transform:scale(0.6)} 60%{transform:scale(1.15)} 100%{transform:scale(1)} }
+
+  .pot { width: 92px; height: 62px; background: linear-gradient(180deg, #e2925a 0%, #c96f39 55%, #b25f2d 100%); clip-path: polygon(8% 0%, 92% 0%, 82% 100%, 18% 100%); position: relative; z-index: 1; transition: transform 0.15s; }
+  .pot::before { content: ''; position: absolute; top: -8px; left: -6px; right: -6px; height: 14px; background: linear-gradient(180deg, #f0a875, #d17a44); border-radius: 6px; }
+  .pot.ready { animation: readywobble 1.2s ease-in-out infinite; }
+  @keyframes readywobble { 0%,100%{transform:rotate(0)} 50%{transform:rotate(-3deg)} }
+
+  .waterbar-bg { width: 78px; height: 9px; background: #7a4a1e; border-radius: 6px; margin-top: 6px; overflow: hidden; border: 1.5px solid #5c3612; z-index: 2; }
+  .waterbar-fill { height: 100%; background: linear-gradient(90deg, #6fd0ff, #2f9ce8); transition: width 0.4s; }
+
+  .droplet { position: absolute; font-size: 20px; animation: drop 0.7s ease-out forwards; pointer-events: none; z-index: 5; }
+  @keyframes drop { 0%{transform:translateY(-30px); opacity:1} 100%{transform:translateY(24px); opacity:0} }
+  .sparkle { position: absolute; font-size: 22px; animation: sparkle 0.9s ease-out forwards; pointer-events: none; z-index: 5; }
+  @keyframes sparkle { 0%{transform:translateY(0) scale(0.6); opacity:1} 100%{transform:translateY(-46px) scale(1.3); opacity:0} }
+
+  /* --- shop --- */
+  #shop {
+    position: relative; z-index: 2; margin-top: 4px;
+    background: linear-gradient(180deg, #fff9e6, #fdf0c8);
+    border: 4px solid #f0c14b; border-radius: 18px; padding: 14px 18px;
+    text-align: center; max-width: 420px;
+    box-shadow: 0 5px 0 #d9a52a;
+  }
+  #shop h3 { margin: 0 0 10px; color: #7a5300; font-family: 'Baloo 2', sans-serif; font-size: 18px; }
+  #shop-subtabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 12px; }
+  .subtab { font-family:'Quicksand',sans-serif; font-weight:700; font-size:12px; padding:6px 12px; border-radius:12px; border:2px solid #b98a3f; background:#fff; color:#7a5300; cursor:pointer; }
+  .subtab.active { background:#f0c14b; color:#5a3d00; }
+  #shop-items { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; max-height: 260px; overflow-y: auto; padding: 4px; }
+  .shop-item {
+    background: #ffedc4; border: 2.5px solid #b98a3f; border-radius: 14px; padding: 8px 12px;
+    cursor: pointer; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 700; color: #6b4300;
+    display: flex; flex-direction: column; align-items: center; gap: 3px; width: 82px;
+    transition: transform 0.12s;
+  }
+  .shop-item .em { font-size: 24px; }
+  .shop-item:hover { transform: translateY(-2px); }
+  .shop-item.selected { background: #7bc45a; color: #fff; border-color: #2f5d18; }
+  .shop-item.locked { opacity: 0.65; }
+  .shop-item.owned { background: #bfe6a0; border-color: #3d7a24; }
+
+  /* --- collection --- */
+  #collection {
+    position: relative; z-index: 2; margin-top: 4px;
+    background: linear-gradient(180deg, #fff9e6, #fdf0c8);
+    border: 4px solid #f0c14b; border-radius: 18px; padding: 14px 18px;
+    text-align: center; max-width: 420px;
+    box-shadow: 0 5px 0 #d9a52a;
+  }
+  #collection h3 { margin: 0 0 4px; color: #7a5300; font-family: 'Baloo 2', sans-serif; font-size: 18px; }
+  #collection .sub { font-family:'Quicksand',sans-serif; font-size:12px; color:#8a6a2a; margin-bottom:10px; }
+  #collection-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-height: 300px; overflow-y: auto; padding: 4px; }
+  .col-card { background: #fff; border: 2.5px solid #d9a52a; border-radius: 14px; padding: 10px 4px; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .col-card .em { font-size: 26px; }
+  .col-card.locked { background:#eee; border-color:#ccc; }
+  .col-card.locked .em { filter: grayscale(1) opacity(0.5); }
+  .col-card span.label { font-family:'Quicksand',sans-serif; font-size:10px; font-weight:700; color:#6b4300; }
+  .col-card.locked span.label { color:#999; }
+
+  /* --- message bubble --- */
+  #msg-wrap { position: relative; z-index: 2; margin-top: 14px; }
+  #msg { background: #ffffff; border: 3px solid #7a4a1e; border-radius: 16px; padding: 8px 18px; font-weight: 700; color: #3a5a12; font-family: 'Quicksand', sans-serif; font-size: 14px; min-height: 20px; text-align: center; box-shadow: 0 3px 0 #b98a3f; max-width: 380px; }
+</style>
+</head>
+<body>
+
+<div class="sun">☀️</div>
+<div class="cloud-deco c1" style="left:-120px;">☁️</div>
+<div class="cloud-deco c2" style="left:-120px;">☁️</div>
+<div class="hill h1"></div>
+<div class="hill h2"></div>
+<div class="bug" style="top:120px; left:20px; animation-delay:0s;">🦋</div>
+<div class="bug" style="top:200px; right:30px; animation-delay:-3s;">🐝</div>
+<div class="rain-cloud" id="cloud">🌧️☁️</div>
+
+<!-- HOOFDMENU -->
+<div id="screen-menu">
+  <div class="menu-card">
+    <div class="big-emoji">🌻</div>
+    <h1>Mijn Tuintje</h1>
+    <p>Plant, geef water en oogst je eigen tuin!</p>
+    <button class="play-btn" id="btn-play">▶️ Start spelen</button>
+    <div class="menu-stats">
+      <span>🪙 <span id="menu-coins">0</span></span>
+      <span>📖 <span id="menu-collection">0</span>/<span id="menu-collection-total">0</span> ontdekt</span>
+    </div>
+  </div>
+</div>
+
+<!-- SPELSCHERM -->
+<div id="screen-game" class="hidden">
+  <div class="sign">
+    <span class="menu-return" id="btn-menu">🏠</span>
+    <h1>🌻 Mijn Tuintje 🌻</h1>
+  </div>
+
+  <div id="topbar" style="position:relative;">
+    <span class="coin-icon">🪙</span> <span id="coins">0</span> muntjes
+  </div>
+
+  <div id="navtabs">
+    <button class="navtab active" data-tab="tuin">🏡 Tuin</button>
+    <button class="navtab" data-tab="winkel">🛒 Winkel</button>
+    <button class="navtab" data-tab="verzameling">🏆 Verzameling</button>
+  </div>
+
+  <!-- TAB: TUIN -->
+  <div id="tab-tuin">
+    <div id="tools">
+      <button class="tool-btn active" id="btn-water"><span class="icon">💧</span>Gieter</button>
+      <button class="tool-btn" id="btn-plant"><span class="icon">🌱</span>Zaadje planten</button>
+    </div>
+    <div id="garden-wrap"><div id="garden"></div></div>
+    <div id="decor-shelf"></div>
+  </div>
+
+  <!-- TAB: WINKEL -->
+  <div id="tab-winkel" class="hidden">
+    <div id="shop">
+      <h3>🛒 Winkeltje</h3>
+      <div id="shop-subtabs">
+        <button class="subtab active" data-sub="zaden">🌱 Zaadjes</button>
+        <button class="subtab" data-sub="decor">🎀 Versieringen</button>
+      </div>
+      <div id="shop-items"></div>
+    </div>
+  </div>
+
+  <!-- TAB: VERZAMELING -->
+  <div id="tab-verzameling" class="hidden">
+    <div id="collection">
+      <h3>🏆 Verzameling</h3>
+      <div class="sub">Oogst planten en koop versieringen om ze te ontgrendelen!</div>
+      <div id="collection-grid"></div>
+    </div>
+  </div>
+
+  <div id="msg-wrap"><div id="msg">Klik op een leeg vakje om een zaadje te planten!</div></div>
+</div>
+
+<script>
+const NUM_PLOTS = 6;
+const PLANT_TYPES = [
+  { name: 'Bloem', cost: 0, emoji: ['🌱','🌿','🌸'], reward: 5 },
+  { name: 'Tomaat', cost: 15, emoji: ['🌱','🌿','🍅'], reward: 10 },
+  { name: 'Zonnebloem', cost: 30, emoji: ['🌱','🌿','🌻'], reward: 15 },
+  { name: 'Aardbei', cost: 50, emoji: ['🌱','🌿','🍓'], reward: 20 },
+  { name: 'Paprika', cost: 70, emoji: ['🌱','🌿','🫑'], reward: 26 },
+  { name: 'Cactus', cost: 90, emoji: ['🌱','🌿','🌵'], reward: 32 },
+];
+const DECOR_TYPES = [
+  { name: 'Vogelhuisje', cost: 20, icon: '🏠' },
+  { name: 'Vlindertuin', cost: 25, icon: '🦋' },
+  { name: 'Fontein', cost: 40, icon: '⛲' },
+  { name: 'Tuinkabouter', icon: '🧙', cost: 35 },
+  { name: 'Bankje', icon: '🪑', cost: 30 },
+  { name: 'Windmolen', icon: '🎡', cost: 45 },
+  { name: 'Lantaarn', icon: '🏮', cost: 22 },
+  { name: 'Vlaggetjes', icon: '🎏', cost: 18 },
+];
+
+let coins = 0;
+let tool = 'water';
+let selectedSeed = 0;
+let shopTab = 'zaden';
+let unlockedSeeds = PLANT_TYPES.map((_, i) => i === 0);
+let ownedDecor = DECOR_TYPES.map(() => false);
+let seenPlants = new Set();
+
+let plots = Array.from({length: NUM_PLOTS}, () => ({
+  planted: false, type: null, stage: 0, growth: 0, water: 100, chest: false,
+}));
+
+const gardenEl = document.getElementById('garden');
+const coinsEl = document.getElementById('coins');
+const menuCoinsEl = document.getElementById('menu-coins');
+const menuCollEl = document.getElementById('menu-collection');
+const menuCollTotalEl = document.getElementById('menu-collection-total');
+const msgEl = document.getElementById('msg');
+const shopItemsEl = document.getElementById('shop-items');
+const decorShelfEl = document.getElementById('decor-shelf');
+const collectionGridEl = document.getElementById('collection-grid');
+
+menuCollTotalEl.textContent = PLANT_TYPES.length + DECOR_TYPES.length;
+
+function say(text) { msgEl.textContent = text; }
+
+/* ---------- navigatie ---------- */
+document.getElementById('btn-play').onclick = () => {
+  document.getElementById('screen-menu').classList.add('hidden');
+  document.getElementById('screen-game').classList.remove('hidden');
+};
+document.getElementById('btn-menu').onclick = () => {
+  document.getElementById('screen-game').classList.add('hidden');
+  document.getElementById('screen-menu').classList.remove('hidden');
+  updateMenuStats();
+};
+document.querySelectorAll('.navtab').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.navtab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const t = btn.dataset.tab;
+    document.getElementById('tab-tuin').classList.toggle('hidden', t !== 'tuin');
+    document.getElementById('tab-winkel').classList.toggle('hidden', t !== 'winkel');
+    document.getElementById('tab-verzameling').classList.toggle('hidden', t !== 'verzameling');
+    if (t === 'winkel') renderShop();
+    if (t === 'verzameling') renderCollection();
+  };
+});
+document.querySelectorAll('.subtab').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.subtab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    shopTab = btn.dataset.sub;
+    renderShop();
+  };
+});
+
+function updateMenuStats() {
+  menuCoinsEl.textContent = coins;
+  const discovered = seenPlants.size + ownedDecor.filter(Boolean).length;
+  menuCollEl.textContent = discovered;
+}
+
+/* ---------- winkel ---------- */
+function renderShop() {
+  shopItemsEl.innerHTML = '';
+  if (shopTab === 'zaden') {
+    PLANT_TYPES.forEach((p, i) => {
+      const isUnlocked = unlockedSeeds[i];
+      const div = document.createElement('div');
+      div.className = 'shop-item' + (selectedSeed === i && isUnlocked ? ' selected' : '') + (!isUnlocked ? ' locked' : '');
+      div.innerHTML = isUnlocked
+        ? '<span class="em">' + p.emoji[2] + '</span>' + p.name
+        : '<span class="em">🔒</span>' + p.name + '<br>' + p.cost + ' 🪙';
+      div.onclick = () => {
+        if (!isUnlocked) {
+          if (coins >= p.cost) {
+            coins -= p.cost; unlockedSeeds[i] = true;
+            say('Je hebt "' + p.name + '" zaadjes gekocht! 🎉');
+            updateCoins(); renderShop();
+          } else {
+            say('Niet genoeg muntjes voor ' + p.name + '. Oogst meer om te sparen!');
+          }
+          return;
+        }
+        selectedSeed = i; setTool('plant'); renderShop();
+        document.querySelector('[data-tab="tuin"]').click();
+        say(p.name + ' geselecteerd. Klik op een leeg vakje om te planten!');
+      };
+      shopItemsEl.appendChild(div);
+    });
+  } else {
+    DECOR_TYPES.forEach((d, i) => {
+      const owned = ownedDecor[i];
+      const div = document.createElement('div');
+      div.className = 'shop-item' + (owned ? ' owned' : '');
+      div.innerHTML = '<span class="em">' + d.icon + '</span>' + d.name + '<br>' + (owned ? 'In tuin ✔️' : d.cost + ' 🪙');
+      div.onclick = () => {
+        if (owned) { say(d.name + ' staat al in je tuin!'); return; }
+        if (coins >= d.cost) {
+          coins -= d.cost; ownedDecor[i] = true;
+          say('Je hebt "' + d.name + '" gekocht! Kijk in je tuin 🎉');
+          updateCoins(); renderShop(); renderDecorShelf();
+        } else {
+          say('Niet genoeg muntjes voor ' + d.name + '. Oogst meer om te sparen!');
+        }
+      };
+      shopItemsEl.appendChild(div);
+    });
+  }
+}
+
+function renderDecorShelf() {
+  const owned = DECOR_TYPES.filter((_, i) => ownedDecor[i]);
+  if (owned.length === 0) {
+    decorShelfEl.innerHTML = '<span class="decor-empty">Koop versieringen in de winkel om je tuin te versieren! 🎀</span>';
+    return;
+  }
+  decorShelfEl.innerHTML = owned.map(d => '<span class="decor-item">' + d.icon + '</span>').join('');
+}
+
+/* ---------- verzameling ---------- */
+function renderCollection() {
+  collectionGridEl.innerHTML = '';
+  PLANT_TYPES.forEach((p) => {
+    const unlocked = seenPlants.has(p.name);
+    const card = document.createElement('div');
+    card.className = 'col-card' + (unlocked ? '' : ' locked');
+    card.innerHTML = '<span class="em">' + (unlocked ? p.emoji[2] : '❔') + '</span><span class="label">' + (unlocked ? p.name : '???') + '</span>';
+    collectionGridEl.appendChild(card);
+  });
+  DECOR_TYPES.forEach((d, i) => {
+    const unlocked = ownedDecor[i];
+    const card = document.createElement('div');
+    card.className = 'col-card' + (unlocked ? '' : ' locked');
+    card.innerHTML = '<span class="em">' + (unlocked ? d.icon : '❔') + '</span><span class="label">' + (unlocked ? d.name : '???') + '</span>';
+    collectionGridEl.appendChild(card);
+  });
+}
+
+function updateCoins() { coinsEl.textContent = coins; updateMenuStats(); }
+
+function setTool(t) {
+  tool = t;
+  document.getElementById('btn-water').classList.toggle('active', t === 'water');
+  document.getElementById('btn-plant').classList.toggle('active', t === 'plant');
+}
+document.getElementById('btn-water').onclick = () => { setTool('water'); say('Gieter gekozen: klik op een plantje om water te geven!'); };
+document.getElementById('btn-plant').onclick = () => { setTool('plant'); say('Zaadje gekozen: klik op een leeg vakje om te planten!'); };
+
+function spawnFx(el, emoji, cls, count) {
+  count = count || 1;
+  for (let n = 0; n < count; n++) {
+    const fx = document.createElement('div');
+    fx.className = cls;
+    fx.textContent = emoji;
+    fx.style.left = (20 + Math.random()*70) + 'px';
+    fx.style.top = (30 + Math.random()*20) + 'px';
+    fx.style.animationDelay = (n * 0.08) + 's';
+    el.appendChild(fx);
+    setTimeout(() => fx.remove(), 900);
+  }
+}
+function spawnCoinPop(el, amount) {
+  const fx = document.createElement('div');
+  fx.className = 'coin-pop';
+  fx.textContent = '+' + amount + ' 🪙';
+  fx.style.left = '30%'; fx.style.top = '0';
+  el.style.position = 'relative';
+  el.appendChild(fx);
+  setTimeout(() => fx.remove(), 900);
+}
+
+/* ---------- tuin ---------- */
+function renderPlots() {
+  gardenEl.innerHTML = '';
+  plots.forEach((plot, idx) => {
+    const el = document.createElement('div');
+    el.className = 'plot';
+    if (plot.chest) {
+      el.innerHTML = '<div class="empty-hole"><span class="chest-icon">🎁</span></div>';
+    } else if (!plot.planted) {
+      el.innerHTML = '<div class="empty-hole"><span class="plus-icon">➕</span></div>';
+    } else {
+      const type = PLANT_TYPES[plot.type];
+      const emoji = type.emoji[plot.stage];
+      const isReady = plot.stage === 2 && plot.growth >= 100;
+      el.innerHTML =
+        '<div class="plant-emoji' + (isReady ? ' grown' : '') + '">' + emoji + '</div>' +
+        '<div class="pot' + (isReady ? ' ready' : '') + '"></div>' +
+        '<div class="waterbar-bg"><div class="waterbar-fill" style="width:' + plot.water + '%"></div></div>';
+    }
+    el.onclick = () => handlePlotClick(idx, el);
+    gardenEl.appendChild(el);
+  });
+}
+
+function handlePlotClick(idx, el) {
+  const plot = plots[idx];
+
+  if (plot.chest) {
+    const bonus = 5 + Math.floor(Math.random() * 11);
+    coins += bonus;
+    updateCoins();
+    spawnFx(el, '✨', 'sparkle', 3);
+    spawnCoinPop(el, bonus);
+    say('Verrassingskistje! Je vond ' + bonus + ' extra muntjes 🎁🪙');
+    plot.chest = false;
+    renderPlots();
+    return;
+  }
+
+  if (!plot.planted) {
+    if (tool !== 'plant') { say('Kies eerst een zaadje in het winkeltje, of klik op "🌱 Zaadje planten"!'); return; }
+    plot.planted = true; plot.type = selectedSeed; plot.stage = 0; plot.growth = 0; plot.water = 100;
+    say('Je hebt een zaadje geplant! Vergeet niet water te geven 💧');
+    renderPlots();
+    return;
+  }
+
+  if (plot.stage === 2 && plot.growth >= 100) {
+    const type = PLANT_TYPES[plot.type];
+    coins += type.reward;
+    seenPlants.add(type.name);
+    updateCoins();
+    spawnFx(el, '✨', 'sparkle', 3);
+    spawnCoinPop(el, type.reward);
+    say('Je hebt geoogst! +' + type.reward + ' muntjes 🪙 Kijk in je Verzameling!');
+    plots[idx] = { planted: false, type: null, stage: 0, growth: 0, water: 100, chest: false };
+    renderPlots();
+    renderShop();
+    return;
+  }
+
+  if (tool === 'water') {
+    plot.water = Math.min(100, plot.water + 35);
+    spawnFx(el, '💧', 'droplet', 3);
+    say('Lekker fris water! 💧');
+    renderPlots();
+  } else {
+    say('Dit vakje is al bezet. Kies de gieter om water te geven!');
+  }
+}
+
+setInterval(() => {
+  plots.forEach((plot) => {
+    if (!plot.planted || plot.chest) return;
+    plot.water = Math.max(0, plot.water - 4);
+    if (plot.water > 20) {
+      plot.growth += plot.stage < 2 ? 8 : 0;
+      if (plot.growth >= 100 && plot.stage < 2) {
+        plot.stage += 1; plot.growth = 0;
+        if (plot.stage === 2) plot.growth = 100;
+      }
+    }
+  });
+  renderPlots();
+}, 1500);
+
+/* verrassingskistjes: verschijnen soms in een leeg vakje */
+setInterval(() => {
+  const emptyIdx = plots.map((p, i) => (!p.planted && !p.chest) ? i : -1).filter(i => i >= 0);
+  if (emptyIdx.length === 0) return;
+  if (Math.random() < 0.5) {
+    const pick = emptyIdx[Math.floor(Math.random() * emptyIdx.length)];
+    plots[pick].chest = true;
+    renderPlots();
+    say('Er ligt een verrassingskistje in de tuin! 🎁 Klik erop!');
+  }
+}, 14000);
+
+function rainEvent() {
+  const cloud = document.getElementById('cloud');
+  cloud.style.transition = 'left 4s linear, opacity 0.5s';
+  cloud.style.opacity = '1';
+  cloud.style.left = '60%';
+  setTimeout(() => {
+    plots.forEach(p => { if (p.planted) p.water = 100; });
+    renderPlots();
+    say('Het regent! ☔ Alle plantjes hebben gratis water gekregen!');
+  }, 2000);
+  setTimeout(() => {
+    cloud.style.transition = 'left 3s linear, opacity 0.5s';
+    cloud.style.left = '120%';
+    cloud.style.opacity = '0';
+  }, 4500);
+}
+setInterval(() => { if (Math.random() < 0.35) rainEvent(); }, 20000);
+
+renderPlots();
+renderShop();
+renderDecorShelf();
+updateCoins();
+</script>
+
+</body>
+</html>

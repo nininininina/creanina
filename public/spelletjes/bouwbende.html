@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BouwBende</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky1:#BEE9F5; --sky2:#EAF7FB;
+    --grass1:#8BC34A; --grass2:#7CB342;
+    --sun:#FFC94A; --coral:#FF7A6E; --skyblue:#4FC3F7; --leaf:#66BB6A; --grape:#BA68C8; --wood:#A97452;
+    --ink:#3E3128;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:'Nunito',sans-serif; color:var(--ink);
+    background: linear-gradient(180deg, var(--sky1) 0%, var(--sky2) 55%, #F4EFDD 55%, #F4EFDD 100%);
+    min-height:100vh; padding-bottom:40px;
+  }
+  h1,h2,h3, .title-font{ font-family:'Baloo 2', cursive; }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 22px; background:#FFFFFFcc; backdrop-filter:blur(4px);
+    border-bottom:4px solid var(--sun); position:sticky; top:0; z-index:20;
+    flex-wrap:wrap; gap:10px;
+  }
+  .topbar h1{ margin:0; font-size:26px; color:var(--coral); }
+  .stat{
+    display:flex; align-items:center; gap:8px; background:#fff;
+    border:3px solid var(--sun); border-radius:20px; padding:6px 14px; font-weight:800; font-size:16px;
+  }
+  .stats{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .coin-icon{ width:16px; height:16px; border-radius:50%; background:#FFC94A; border:2px solid #C98A1E; }
+  .star-icon{ width:16px; height:16px; background:#FF9EC0; clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+  .btn{
+    font-family:'Baloo 2',cursive; font-weight:700; font-size:14px; border:3px solid var(--ink);
+    border-radius:16px; padding:8px 14px; cursor:pointer; background:var(--sun); color:var(--ink);
+    box-shadow:0 4px 0 rgba(0,0,0,0.15); transition:transform .08s;
+  }
+  .btn:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,0.15); }
+  .btn.blue{ background:var(--skyblue); }
+  .btn.green{ background:var(--leaf); }
+  .btn.pink{ background:#FF9EC0; }
+  .btn.active{ outline:3px solid var(--ink); }
+  .wrap{ display:flex; gap:18px; padding:18px; max-width:1200px; margin:0 auto; flex-wrap:wrap; align-items:flex-start; }
+  .panel{
+    background:#FFFFFFee; border:4px solid #fff; border-radius:22px;
+    box-shadow:0 6px 0 rgba(0,0,0,0.08); padding:14px;
+  }
+  .sidebar{ width:210px; flex-shrink:0; }
+  .sidebar h3{ margin:4px 0 8px; font-size:16px; }
+  .tools{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .tool{
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    border:3px solid #eee; border-radius:14px; padding:8px 4px; cursor:pointer;
+    background:#fafafa; user-select:none;
+  }
+  .tool.selected{ border-color:var(--coral); background:#FFE7E3; }
+  .tool span.label{ font-size:11px; font-weight:700; }
+  .icon-box{ width:28px; height:28px; position:relative; }
+  .colors{ display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .swatch{ width:26px; height:26px; border-radius:50%; border:3px solid #fff; outline:2px solid #ddd; cursor:pointer; }
+  .swatch.selected{ outline:3px solid var(--ink); }
+  .board-holder{ flex:1; min-width:340px; display:flex; flex-direction:column; align-items:center; }
+  .viewbtns{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; justify-content:center; }
+  .board{
+    display:grid; gap:1px; background:var(--grass2); padding:8px; border-radius:18px; border:6px solid #fff;
+    box-shadow:0 6px 0 rgba(0,0,0,0.08);
+  }
+  .cell{
+    border-radius:4px; background:var(--grass1);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; position:relative; overflow:hidden;
+  }
+  .cell:hover{ outline:2px solid #fff; }
+  .elevation-wrap{
+    background:var(--grass2); border-radius:18px; border:6px solid #fff; box-shadow:0 6px 0 rgba(0,0,0,0.08);
+    padding:8px; overflow-x:auto;
+  }
+  .elevation{ position:relative; }
+  .missionpanel{ width:240px; flex-shrink:0; }
+  .missionpanel h3{ font-size:16px; margin:2px 0 6px; color:var(--coral); }
+  .need-list{ list-style:none; padding:0; margin:8px 0; font-size:14px; }
+  .need-list li{ display:flex; justify-content:space-between; align-items:center; padding:4px 0; gap:6px; }
+  .need-list li.done{ color:var(--leaf); font-weight:800; }
+  .shop{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  .shopitem{
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    border:3px solid #eee; border-radius:14px; text-align:center; padding:8px 4px; cursor:pointer;
+  }
+  .shopitem .cost{ font-size:11px; font-weight:800; color:var(--wood); }
+  .mascot{
+    position:fixed; right:18px; bottom:18px; display:flex; align-items:flex-end; gap:8px; z-index:30; max-width:290px;
+  }
+  .bo{ width:56px; height:56px; position:relative; flex-shrink:0; }
+  .bo-head{ position:absolute; width:34px; height:34px; border-radius:50%; background:#FFCBA0; left:11px; top:20px; border:2px solid #E8A876; }
+  .bo-eye{ position:absolute; width:4px; height:4px; border-radius:50%; background:#3E3128; top:33px; }
+  .bo-hat{ position:absolute; width:44px; height:20px; border-radius:20px 20px 0 0; background:var(--sun); left:6px; top:8px; border:2px solid #C98A1E; }
+  .bo-hatbrim{ position:absolute; width:48px; height:6px; border-radius:6px; background:#C98A1E; left:4px; top:22px; }
+  .bubble{
+    background:#fff; border:3px solid var(--grape); border-radius:16px; padding:10px 14px; font-size:13px;
+    font-weight:700; box-shadow:0 4px 0 rgba(0,0,0,0.08);
+  }
+  .popup-bg{
+    position:fixed; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; z-index:50;
+  }
+  .popup{
+    background:#fff; border-radius:24px; border:5px solid var(--sun); padding:26px 30px; text-align:center; max-width:320px;
+  }
+  .stars{ display:flex; gap:6px; justify-content:center; margin:12px 0; }
+  .stars .star-icon{ width:28px; height:28px; }
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>BouwBende</h1>
+  <div class="stats">
+    <div class="stat"><div class="coin-icon"></div><span id="coinCount">0</span></div>
+    <div class="stat"><div class="star-icon"></div><span id="starCount">0</span></div>
+    <button class="btn blue" id="saveBtn">Opslaan</button>
+    <button class="btn green" id="loadBtn">Laden</button>
+    <button class="btn pink" id="resetBtn">Opnieuw</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="panel sidebar">
+    <h3>Bouwspullen</h3>
+    <div class="tools" id="toolList"></div>
+    <div class="colors" id="colorList"></div>
+    <h3 style="margin-top:16px;">Winkel</h3>
+    <div class="shop" id="shopList"></div>
+  </div>
+
+  <div class="board-holder">
+    <div class="viewbtns" id="viewBtns"></div>
+    <div id="buildView"><div class="board" id="board"></div></div>
+    <div id="elevationView" class="elevation-wrap hidden"><div class="elevation" id="elevation"></div></div>
+    <div style="margin-top:10px; font-size:13px; color:#7a7167; font-weight:700; text-align:center;">Bovenaanzicht: klik op een leeg vakje om te bouwen. Kies "Wis" om iets weg te halen. Met de knoppen erboven bekijk je je gebouw van elke kant.</div>
+  </div>
+
+  <div class="panel missionpanel">
+    <h3 id="missionTitle">Missie</h3>
+    <div id="missionDesc" style="font-size:13px; font-weight:700; color:#7a7167;"></div>
+    <ul class="need-list" id="needList"></ul>
+    <button class="btn green" id="finishBtn" style="width:100%; margin-top:6px;">Ik ben klaar!</button>
+  </div>
+
+</div>
+
+<div class="mascot">
+  <div class="bubble" id="tipBubble">Hoi! Ik ben Bo, jouw bouwmaatje. Kies iets in het gereedschap en klik op het gras om te bouwen!</div>
+  <div class="bo"><div class="bo-hat"></div><div class="bo-hatbrim"></div><div class="bo-head"></div><div class="bo-eye" style="left:20px;"></div><div class="bo-eye" style="left:30px;"></div></div>
+</div>
+
+<div class="popup-bg hidden" id="popupBg">
+  <div class="popup">
+    <div id="popupTitle" style="font-family:'Baloo 2'; font-size:20px; color:var(--coral);">Goed gedaan!</div>
+    <div class="stars" id="popupStars"></div>
+    <div id="popupText" style="font-size:14px; font-weight:700;"></div>
+    <button class="btn" id="popupClose" style="margin-top:14px;">Verder bouwen!</button>
+  </div>
+</div>
+
+<script>
+const COLS=16, ROWS=12, CELL=32;
+
+function shade(hex, percent){
+  const f=parseInt(hex.slice(1),16), t=percent<0?0:255, p=Math.abs(percent);
+  const R=f>>16, G=(f>>8)&0x00FF, B=f&0x0000FF;
+  return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
+}
+
+const ITEMS = {
+  muur:{label:'Muur', colorable:true, colors:['#FFFFFF','#F5DEB3','#FFB6C1','#B0C4DE','#D2B48C'], height:70},
+  dak:{label:'Dak', colorable:true, colors:['#E53935','#795548','#455A64','#8E24AA','#FDD835'], height:55},
+  deur:{label:'Deur', colorable:true, colors:['#8D6E63','#5D4037','#3E2723','#FFB300'], height:70},
+  raam:{label:'Raam', colorable:true, colors:['#81D4FA','#4FC3F7','#B3E5FC'], height:70},
+  boom:{label:'Boom', colorable:false, color:'#5B9A4B', height:60},
+  bloem:{label:'Bloem', colorable:false, color:'#FF6FA5', height:26},
+  pad:{label:'Pad', colorable:false, color:'#C2A878', height:6},
+  wis:{label:'Wis', colorable:false, color:'#eee', height:0}
+};
+const SHOP = {
+  zwembad:{label:'Zwembad', color:'#4FC3F7', height:6, cost:25},
+  schommel:{label:'Schommel', color:'#C25B3A', height:50, cost:15},
+  lantaarn:{label:'Lantaarn', color:'#546E7A', height:60, cost:10},
+  bank:{label:'Bank', color:'#8D6E63', height:24, cost:10}
+};
+const MISSIONS = [
+  {title:'Bouw een huis voor een gezin van 4', desc:'Bo wil graag een gezellig huis met muren, een dak, een deur en ramen.', need:{muur:6, dak:1, deur:1, raam:2}, reward:{coins:20, stars:3}},
+  {title:'Maak er een fijne tuin bij', desc:'Voeg bomen en bloemen toe zodat het gezin lekker buiten kan spelen.', need:{boom:2, bloem:3}, reward:{coins:15, stars:2}},
+  {title:'Leg een pad naar de voordeur', desc:'Zo hoeft niemand meer door het gras te lopen.', need:{pad:3}, reward:{coins:10, stars:2}}
+];
+const TIPS = [
+  'Wist je dat echte bouwers ook eerst een tekening op papier maken?',
+  'Kleuren maken een huis extra vrolijk. Probeer eens twee kleuren te combineren.',
+  'Een tuin met bomen zorgt voor schaduw op een warme dag.',
+  'Je mag alles combineren, dat maakt jouw plek uniek.',
+  'Verdien je genoeg bouwmunten? Kijk dan eens in de winkel.',
+  'Bekijk je gebouw eens van de zijkant, misschien mist er nog een raam!'
+];
+
+const WALLLIKE = ['muur'];
+
+let state = {
+  grid: Array.from({length: ROWS*COLS}, () => ({type:'gras', color:null, roof:null})),
+  coins: 15,
+  stars: 0,
+  unlockedShop: {},
+  missionIndex: 0
+};
+let selectedTool = 'muur';
+let selectedColor = ITEMS.muur.colors[0];
+let currentView = 'top';
+
+function getColor(item, cellColor){
+  if(item.colorable) return cellColor || item.colors[0];
+  return item.color;
+}
+
+function iconHTML(type, color){
+  const item = ITEMS[type] || SHOP[type];
+  const c = color || (item.colorable ? item.colors[0] : item.color);
+  if(type==='muur') return `<div style="position:absolute;inset:3px;background:${c};border:2px solid ${shade(c,-0.25)};border-radius:3px;"></div>`;
+  if(type==='dak') return `<div style="position:absolute;inset:2px;background:${c};clip-path:polygon(50% 0%,100% 40%,100% 100%,0% 100%,0% 40%);"></div>`;
+  if(type==='deur') return `<div style="position:absolute;inset:3px 8px;background:${c};border-radius:3px 3px 0 0;"><div style="position:absolute;width:4px;height:4px;border-radius:50%;background:#FFD54F;right:3px;top:14px;"></div></div>`;
+  if(type==='raam') return `<div style="position:absolute;inset:4px;background:${c};border:2px solid #fff;"><div style="position:absolute;left:48%;top:0;bottom:0;width:2px;background:#fff;"></div><div style="position:absolute;top:48%;left:0;right:0;height:2px;background:#fff;"></div></div>`;
+  if(type==='boom') return `<div style="position:absolute;left:11px;bottom:2px;width:6px;height:10px;background:#8D6E63;"></div><div style="position:absolute;left:4px;top:1px;width:20px;height:18px;border-radius:50%;background:${c};"></div>`;
+  if(type==='bloem') return `<div style="position:absolute;left:13px;bottom:2px;width:2px;height:12px;background:#66BB6A;"></div><div style="position:absolute;left:9px;top:3px;width:10px;height:10px;border-radius:50%;background:${c};"></div>`;
+  if(type==='pad') return `<div style="position:absolute;inset:5px;background:${c};border-radius:6px;"></div>`;
+  if(type==='wis') return `<div style="position:absolute;inset:4px;background:#f2f2f2;border:2px solid #ccc;border-radius:3px;"></div><div style="position:absolute;left:2px;top:14px;right:2px;height:2px;background:#E57373;transform:rotate(-20deg);"></div>`;
+  if(type==='zwembad') return `<div style="position:absolute;inset:4px;background:${c};border-radius:6px;border:2px solid ${shade(c,-0.2)};"></div>`;
+  if(type==='schommel') return `<div style="position:absolute;left:4px;top:2px;bottom:2px;width:3px;background:#8D6E63;"></div><div style="position:absolute;right:4px;top:2px;bottom:2px;width:3px;background:#8D6E63;"></div><div style="position:absolute;left:4px;right:4px;top:2px;height:3px;background:#8D6E63;"></div><div style="position:absolute;left:10px;top:12px;width:8px;height:6px;background:${c};"></div>`;
+  if(type==='lantaarn') return `<div style="position:absolute;left:13px;top:6px;bottom:2px;width:3px;background:${c};"></div><div style="position:absolute;left:9px;top:1px;width:11px;height:8px;border-radius:50%;background:#FFD54F;"></div>`;
+  if(type==='bank') return `<div style="position:absolute;left:3px;right:3px;top:10px;height:4px;background:${c};"></div><div style="position:absolute;left:4px;top:14px;width:3px;height:8px;background:${c};"></div><div style="position:absolute;right:4px;top:14px;width:3px;height:8px;background:${c};"></div>`;
+  return '';
+}
+
+function renderTools(){
+  const box = document.getElementById('toolList');
+  box.innerHTML='';
+  Object.entries(ITEMS).forEach(([key,item])=>{
+    const d = document.createElement('div');
+    d.className = 'tool' + (key===selectedTool ? ' selected':'');
+    d.innerHTML = `<div class="icon-box">${iconHTML(key)}</div><span class="label">${item.label}</span>`;
+    d.onclick = ()=>{ selectedTool=key; if(item.colorable) selectedColor=item.colors[0]; renderTools(); renderColors(); };
+    box.appendChild(d);
+  });
+}
+function renderColors(){
+  const box = document.getElementById('colorList');
+  box.innerHTML='';
+  const item = ITEMS[selectedTool];
+  if(!item || !item.colorable) return;
+  item.colors.forEach(c=>{
+    const s = document.createElement('div');
+    s.className='swatch'+(c===selectedColor?' selected':'');
+    s.style.background=c;
+    s.onclick=()=>{ selectedColor=c; renderColors(); };
+    box.appendChild(s);
+  });
+}
+function renderShop(){
+  const box = document.getElementById('shopList');
+  box.innerHTML='';
+  Object.entries(SHOP).forEach(([key,item])=>{
+    const unlocked = state.unlockedShop[key];
+    const d = document.createElement('div');
+    d.className='shopitem'+(unlocked && key===selectedTool?' selected':'');
+    d.style.opacity = unlocked ? '1' : '0.5';
+    d.innerHTML = `<div class="icon-box">${iconHTML(key)}</div><div style="font-size:11px;font-weight:800;">${item.label}</div><div class="cost">${unlocked?'ontgrendeld':'kost '+item.cost}</div>`;
+    d.onclick = ()=>{
+      if(unlocked){
+        selectedTool = key;
+        setBubble(`Je hebt ${item.label} gekozen. Klik op het gras om te plaatsen.`);
+        renderTools(); renderColors(); renderShop(); return;
+      }
+      if(state.coins >= item.cost){
+        state.coins -= item.cost;
+        state.unlockedShop[key] = true;
+        ITEMS[key] = {label:item.label, colorable:false, color:item.color, height:item.height};
+        setBubble(`Hoera, je hebt ${item.label} ontgrendeld!`);
+        renderTools(); renderShop(); updateStats();
+      } else {
+        setBubble(`Je hebt nog niet genoeg bouwmunten voor ${item.label}. Doe een missie om er meer te verdienen.`);
+      }
+    };
+    box.appendChild(d);
+  });
+}
+function renderBoard(){
+  const board = document.getElementById('board');
+  board.style.gridTemplateColumns = `repeat(${COLS}, ${CELL}px)`;
+  board.style.gridTemplateRows = `repeat(${ROWS}, ${CELL}px)`;
+  board.innerHTML='';
+  state.grid.forEach((cell, i)=>{
+    const c = document.createElement('div');
+    c.className='cell';
+    c.style.width=CELL+'px'; c.style.height=CELL+'px';
+    if(cell.type==='gras'){
+      c.style.background = (Math.floor(i/COLS)+i)%2===0 ? 'var(--grass1)' : 'var(--grass2)';
+    } else {
+      const item = ITEMS[cell.type];
+      c.style.background = 'var(--grass1)';
+      if(item) c.innerHTML = iconHTML(cell.type, item.colorable ? cell.color : item.color);
+    }
+    if(cell.roof){
+      c.innerHTML += `<div style="position:absolute;inset:-2px 0 55% 0;background:${cell.roof};clip-path:polygon(50% 0%,100% 100%,0% 100%);border:1px solid ${shade(cell.roof,-0.25)};z-index:2;"></div>`;
+    }
+    c.onclick = ()=> placeAt(i);
+    board.appendChild(c);
+  });
+}
+function placeAt(i){
+  const cell = state.grid[i];
+  if(selectedTool==='wis'){
+    if(cell.roof){ cell.roof = null; }
+    else { state.grid[i] = {type:'gras', color:null, roof:null}; }
+  } else if(selectedTool==='dak'){
+    if(WALLLIKE.includes(cell.type)){
+      cell.roof = selectedColor;
+    } else {
+      setBubble('Een dak past het best boven op een muur. Zet eerst een muur neer, dan kan het dak erop!');
+      return;
+    }
+  } else {
+    const item = ITEMS[selectedTool];
+    const keepRoof = WALLLIKE.includes(selectedTool) ? cell.roof : null;
+    state.grid[i] = {type:selectedTool, color: item.colorable ? selectedColor : null, roof: keepRoof};
+  }
+  renderBoard();
+  updateMissionPanel();
+}
+function countTypes(){
+  const counts = {};
+  state.grid.forEach(c=>{
+    if(c.type!=='gras') counts[c.type]=(counts[c.type]||0)+1;
+    if(c.roof) counts.dak=(counts.dak||0)+1;
+  });
+  return counts;
+}
+function updateMissionPanel(){
+  const m = MISSIONS[state.missionIndex];
+  const list = document.getElementById('needList');
+  document.getElementById('missionTitle').textContent = 'Missie: ' + m.title;
+  document.getElementById('missionDesc').textContent = m.desc;
+  const counts = countTypes();
+  list.innerHTML='';
+  Object.entries(m.need).forEach(([type,amount])=>{
+    const have = counts[type]||0;
+    const li = document.createElement('li');
+    if(have>=amount) li.className='done';
+    li.innerHTML = `<span style="display:flex;align-items:center;gap:6px;"><span class="icon-box" style="width:18px;height:18px;">${iconHTML(type)}</span>${ITEMS[type].label}</span><span>${Math.min(have,amount)}/${amount}</span>`;
+    list.appendChild(li);
+  });
+}
+function missionComplete(){
+  const m = MISSIONS[state.missionIndex];
+  const counts = countTypes();
+  return Object.entries(m.need).every(([type,amount])=> (counts[type]||0) >= amount);
+}
+function updateStats(){
+  document.getElementById('coinCount').textContent = state.coins;
+  document.getElementById('starCount').textContent = state.stars;
+}
+function setBubble(text){ document.getElementById('tipBubble').textContent = text; }
+
+document.getElementById('finishBtn').onclick = ()=>{
+  if(!missionComplete()){
+    setBubble('Bijna klaar! Kijk in de missielijst wat er nog mist. Jij kan het!');
+    return;
+  }
+  const m = MISSIONS[state.missionIndex];
+  const counts = countTypes();
+  let bonus = (counts.boom || counts.bloem) ? 1 : 0;
+  const earnedStars = Math.min(5, m.reward.stars + bonus);
+  state.coins += m.reward.coins;
+  state.stars += earnedStars;
+  showPopup(earnedStars, m.reward.coins);
+  updateStats();
+  if(state.missionIndex < MISSIONS.length-1){
+    state.missionIndex++;
+  } else {
+    setBubble('Je hebt alle missies gedaan! Blijf lekker verder bouwen wat jij wil.');
+  }
+  updateMissionPanel();
+};
+function showPopup(stars, coins){
+  const box = document.getElementById('popupStars');
+  box.innerHTML='';
+  for(let i=0;i<5;i++){
+    const s = document.createElement('div');
+    s.className='star-icon';
+    s.style.background = i<stars ? '#FFC94A' : '#e6e6e6';
+    box.appendChild(s);
+  }
+  document.getElementById('popupText').textContent = `Je hebt ${coins} bouwmunten verdiend!`;
+  document.getElementById('popupBg').classList.remove('hidden');
+}
+document.getElementById('popupClose').onclick = ()=> document.getElementById('popupBg').classList.add('hidden');
+
+document.getElementById('saveBtn').onclick = async ()=>{
+  try{
+    if(typeof window.storage === 'undefined'){ setBubble('Opslaan werkt hier niet, maar bouw gewoon lekker verder!'); return; }
+    await window.storage.set('bouwbende-save', JSON.stringify(state), false);
+    setBubble('Jouw wereld is opgeslagen!');
+  }catch(e){ setBubble('Oeps, opslaan lukte niet. Probeer het nog eens!'); }
+};
+document.getElementById('loadBtn').onclick = async ()=>{
+  try{
+    if(typeof window.storage === 'undefined'){ setBubble('Laden werkt hier niet.'); return; }
+    const result = await window.storage.get('bouwbende-save', false);
+    if(result && result.value){
+      state = JSON.parse(result.value);
+      Object.keys(state.unlockedShop||{}).forEach(key=>{
+        if(SHOP[key]) ITEMS[key] = {label:SHOP[key].label, colorable:false, color:SHOP[key].color, height:SHOP[key].height};
+      });
+      renderTools(); renderColors(); renderShop(); renderBoard(); updateStats(); updateMissionPanel(); renderCurrentView();
+      setBubble('Welkom terug! Ik heb je wereld weer opgebouwd.');
+    } else {
+      setBubble('Ik kon nog geen opgeslagen wereld vinden.');
+    }
+  }catch(e){ setBubble('Ik kon geen opgeslagen wereld vinden.'); }
+};
+document.getElementById('resetBtn').onclick = ()=>{
+  state = { grid: Array.from({length: ROWS*COLS}, () => ({type:'gras', color:null, roof:null})), coins:15, stars:0, unlockedShop:{}, missionIndex:0 };
+  renderBoard(); updateStats(); updateMissionPanel(); renderCurrentView();
+  setBubble('Helemaal leeg terrein, klaar om opnieuw te bouwen!');
+};
+
+const VIEWS = [
+  {key:'top', label:'Van boven'},
+  {key:'front', label:'Voorkant'},
+  {key:'right', label:'Rechterkant'},
+  {key:'back', label:'Achterkant'},
+  {key:'left', label:'Linkerkant'}
+];
+function renderViewButtons(){
+  const box = document.getElementById('viewBtns');
+  box.innerHTML='';
+  VIEWS.forEach(v=>{
+    const b = document.createElement('button');
+    b.className = 'btn' + (currentView===v.key ? ' active':'');
+    b.textContent = v.label;
+    b.onclick = ()=>{ currentView=v.key; renderViewButtons(); renderCurrentView(); };
+    box.appendChild(b);
+  });
+}
+function getCell(c,r){ return state.grid[r*COLS+c]; }
+function barColor(cell){
+  const item = ITEMS[cell.type];
+  if(!item) return '#ccc';
+  return item.colorable ? (cell.color || item.colors[0]) : item.color;
+}
+function buildElevationBars(dir){
+  let xCount, depthCount, mapFn;
+  if(dir==='front'){ xCount=COLS; depthCount=ROWS; mapFn=(x,d)=>[x,d]; }
+  else if(dir==='back'){ xCount=COLS; depthCount=ROWS; mapFn=(x,d)=>[COLS-1-x, ROWS-1-d]; }
+  else if(dir==='right'){ xCount=ROWS; depthCount=COLS; mapFn=(x,d)=>[d, x]; }
+  else { xCount=ROWS; depthCount=COLS; mapFn=(x,d)=>[COLS-1-d, ROWS-1-x]; }
+  const bars=[];
+  for(let d=0; d<depthCount; d++){
+    for(let x=0; x<xCount; x++){
+      const [c,r] = mapFn(x,d);
+      const cell = getCell(c,r);
+      if(cell.type==='gras') continue;
+      const h = (ITEMS[cell.type]||{}).height || 10;
+      const parts = [{height:h, color: barColor(cell)}];
+      if(cell.roof){ parts.push({height: ITEMS.dak.height*0.7, color: cell.roof}); }
+      bars.push({x, depth:d, parts, total: parts.reduce((s,p)=>s+p.height,0)});
+    }
+  }
+  return {bars, xCount, depthCount};
+}
+function renderElevation(dir){
+  const {bars, xCount, depthCount} = buildElevationBars(dir);
+  const slot = 30, depthPx = 2;
+  const width = xCount*slot + depthCount*depthPx + 10;
+  const maxTotal = bars.reduce((m,b)=>Math.max(m,b.total), 40);
+  const height = maxTotal + 20;
+  const el = document.getElementById('elevation');
+  el.style.width = width+'px';
+  el.style.height = height+'px';
+  el.innerHTML = `<div style="position:absolute;left:0;right:0;bottom:0;height:8px;background:var(--grass1);border-radius:4px;"></div>`;
+  bars.forEach(b=>{
+    let bottom = 6;
+    b.parts.forEach(p=>{
+      const div = document.createElement('div');
+      div.style.position='absolute';
+      div.style.left = (b.x*slot + b.depth*depthPx) + 'px';
+      div.style.bottom = bottom+'px';
+      div.style.width = (slot-6)+'px';
+      div.style.height = Math.max(4,p.height)+'px';
+      div.style.background = shade(p.color, -b.depth*0.04);
+      div.style.border = '1px solid rgba(0,0,0,0.15)';
+      div.style.borderRadius = '3px';
+      el.appendChild(div);
+      bottom += p.height;
+    });
+  });
+}
+function renderCurrentView(){
+  const build = document.getElementById('buildView');
+  const elev = document.getElementById('elevationView');
+  if(currentView==='top'){
+    build.classList.remove('hidden');
+    elev.classList.add('hidden');
+  } else {
+    build.classList.add('hidden');
+    elev.classList.remove('hidden');
+    renderElevation(currentView);
+  }
+}
+
+let tipIndex=0;
+setInterval(()=>{
+  tipIndex = (tipIndex+1) % TIPS.length;
+  if(document.getElementById('popupBg').classList.contains('hidden')){
+    setBubble(TIPS[tipIndex]);
+  }
+}, 12000);
+
+renderTools(); renderColors(); renderShop(); renderBoard(); updateStats(); updateMissionPanel();
+renderViewButtons(); renderCurrentView();
+</script>
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Honden vs Katten</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;}
+body{background:#1a1a2e;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:16px;}
+#wrap{width:100%;max-width:700px;}
+#arena{position:relative;width:100%;height:400px;border-radius:16px;overflow:hidden;border:3px solid #444;}
+#sky{position:absolute;inset:0;background:#74c8f0;}
+#sun{position:absolute;top:16px;right:60px;width:56px;height:56px;background:#ffe84a;border-radius:50%;border:4px solid #ffc800;}
+#hill1{position:absolute;bottom:33%;left:-30px;width:260px;height:160px;background:#4db84a;border-radius:50%;}
+#hill2{position:absolute;bottom:33%;right:-30px;width:220px;height:140px;background:#3da03a;border-radius:50%;}
+#hill3{position:absolute;bottom:33%;left:28%;width:200px;height:110px;background:#58c854;border-radius:50%;}
+#ground{position:absolute;bottom:0;left:0;width:100%;height:36%;background:#5dc83a;}
+#ground2{position:absolute;bottom:0;left:0;width:100%;height:18%;background:#72e04a;border-radius:0 0 16px 16px;}
+.cld{position:absolute;background:white;border-radius:40px;}
+#cl1{top:9%;left:8%;width:80px;height:26px;}
+#cl1::before{content:'';position:absolute;top:-16px;left:14px;width:52px;height:40px;background:white;border-radius:50%;}
+#cl2{top:15%;right:14%;width:62px;height:22px;}
+#cl2::before{content:'';position:absolute;top:-13px;left:10px;width:40px;height:32px;background:white;border-radius:50%;}
+#hpBar{position:absolute;top:10px;left:8px;width:43%;}
+#cpBar{position:absolute;top:10px;right:8px;width:43%;text-align:right;}
+.bLbl{font-size:13px;font-weight:bold;color:white;text-shadow:1px 1px 0 #111;margin-bottom:2px;}
+.bOut{background:rgba(0,0,0,0.5);border-radius:10px;height:14px;border:1.5px solid rgba(255,255,255,0.4);}
+.bIn{height:100%;border-radius:10px;transition:width 0.35s;}
+#hpIn{background:#2ecc71;width:100%;}
+#cpIn{background:#9b59b6;width:100%;}
+#hpN,#cpN{font-size:11px;color:white;text-shadow:1px 1px 0 #222;}
+#rnd{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(20,20,40,0.75);color:white;font-size:12px;font-weight:bold;padding:3px 14px;border-radius:20px;white-space:nowrap;}
+#scr{position:absolute;top:34px;left:50%;transform:translateX(-50%);background:#ffe84a;color:#7a4a00;font-size:16px;font-weight:bold;padding:2px 16px;border-radius:14px;border:2px solid #ffc800;}
+#msg{position:absolute;top:62px;left:50%;transform:translateX(-50%);background:rgba(20,20,40,0.75);color:white;font-size:13px;padding:4px 16px;border-radius:14px;white-space:nowrap;text-align:center;min-width:150px;}
+#dogSvg{position:absolute;bottom:17%;left:3%;width:120px;height:120px;transition:left 0.22s;filter:drop-shadow(2px 4px 4px rgba(0,0,0,0.3));}
+#catSvg{position:absolute;bottom:17%;right:3%;width:120px;height:120px;transition:right 0.22s;filter:drop-shadow(2px 4px 4px rgba(0,0,0,0.3));transform:scaleX(-1);}
+#fx{position:absolute;font-size:44px;display:none;pointer-events:none;}
+#ctrl{background:#222;border-radius:0 0 16px 16px;padding:12px;border:3px solid #444;border-top:none;}
+#tinfo{text-align:center;font-size:13px;color:#aaa;margin-bottom:6px;}
+#p1b,#p2b{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:4px;}
+.ab{padding:6px 12px;font-size:12px;border-radius:8px;border:2px solid;background:#1a1a2e;cursor:pointer;font-weight:bold;transition:opacity 0.2s;}
+.ab.dog{border-color:#27ae60;color:#2ecc71;}
+.ab.cat{border-color:#8e44ad;color:#9b59b6;}
+.ab:hover:not(:disabled){opacity:0.8;}
+.ab:disabled{opacity:0.3;cursor:not-allowed;}
+#br{display:flex;gap:8px;justify-content:center;margin-top:8px;}
+.gb{padding:8px 18px;font-size:13px;border-radius:8px;border:2px solid #555;background:#333;cursor:pointer;color:white;font-weight:bold;}
+.gb:hover{background:#444;}
+#sel{display:none;background:#1a1a2e;padding:10px;border-top:1px solid #444;margin-top:8px;border-radius:8px;}
+#sel h3{font-size:13px;font-weight:bold;color:#eee;text-align:center;margin-bottom:6px;}
+#dp,#cp{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:6px;}
+.pb{padding:5px 12px;font-size:12px;border-radius:8px;border:2px solid #444;background:#222;cursor:pointer;color:#ccc;}
+.pb:hover{background:#333;}
+.pb.da{border-color:#27ae60;color:#2ecc71;font-weight:bold;}
+.pb.ca{border-color:#8e44ad;color:#9b59b6;font-weight:bold;}
+</style>
+</head>
+<body>
+<div id="wrap">
+<div id="arena">
+  <div id="sky"></div><div id="sun"></div>
+  <div id="hill1"></div><div id="hill2"></div><div id="hill3"></div>
+  <div id="ground"></div><div id="ground2"></div>
+  <div class="cld" id="cl1"></div><div class="cld" id="cl2"></div>
+  <div id="hpBar"><div class="bLbl" id="dLbl">Hond</div><div class="bOut"><div class="bIn" id="hpIn"></div></div><div id="hpN">60/60</div></div>
+  <div id="cpBar"><div class="bLbl" id="cLbl">Kat</div><div class="bOut"><div class="bIn" id="cpIn"></div></div><div id="cpN">60/60</div></div>
+  <div id="rnd">Ronde 1/3</div>
+  <div id="scr">0 - 0</div>
+  <div id="msg">Kies je dier!</div>
+  <svg id="dogSvg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"></svg>
+  <svg id="catSvg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div id="fx">💥</div>
+</div>
+<div id="ctrl">
+  <div id="tinfo">Kies je dier of start meteen!</div>
+  <div id="p1b"></div>
+  <div id="p2b"></div>
+  <div id="br">
+    <button class="gb" onclick="toggleSel()">🎮 Kies dieren</button>
+    <button class="gb" onclick="startGame()">▶ Nieuw spel</button>
+  </div>
+  <div id="sel">
+    <h3>Speler 1 kiest een hond:</h3>
+    <div id="dp"></div>
+    <h3 style="margin-top:8px;">Speler 2 kiest een kat:</h3>
+    <div id="cp"></div>
+    <div style="text-align:center;margin-top:10px;"><button class="gb" onclick="confirmSel()">✅ Klaar! Start gevecht</button></div>
+  </div>
+</div>
+</div>
+<script>
+const dogs=[
+{name:"Vuurhond",draw(s){s.innerHTML=`
+<ellipse cx="60" cy="78" rx="36" ry="26" fill="#e84a10" stroke="#b03000" stroke-width="2.5"/>
+<ellipse cx="60" cy="50" rx="28" ry="26" fill="#e84a10" stroke="#b03000" stroke-width="2.5"/>
+<ellipse cx="38" cy="28" rx="11" ry="16" fill="#e84a10" stroke="#b03000" stroke-width="2" transform="rotate(-18 38 28)"/>
+<ellipse cx="82" cy="28" rx="11" ry="16" fill="#e84a10" stroke="#b03000" stroke-width="2" transform="rotate(18 82 28)"/>
+<ellipse cx="38" cy="30" rx="6" ry="10" fill="#ff9060" transform="rotate(-18 38 30)"/>
+<ellipse cx="82" cy="30" rx="6" ry="10" fill="#ff9060" transform="rotate(18 82 30)"/>
+<ellipse cx="60" cy="56" rx="18" ry="14" fill="#ff9060"/>
+<circle cx="50" cy="44" r="6" fill="white" stroke="#b03000" stroke-width="1.5"/>
+<circle cx="70" cy="44" r="6" fill="white" stroke="#b03000" stroke-width="1.5"/>
+<circle cx="51" cy="45" r="3.5" fill="#111"/>
+<circle cx="71" cy="45" r="3.5" fill="#111"/>
+<circle cx="52" cy="43" r="1.2" fill="white"/>
+<circle cx="72" cy="43" r="1.2" fill="white"/>
+<ellipse cx="60" cy="62" rx="6" ry="4" fill="#cc3030"/>
+<ellipse cx="60" cy="64" rx="9" ry="4" fill="#ff5050"/>
+<ellipse cx="22" cy="88" rx="11" ry="8" fill="#e84a10" stroke="#b03000" stroke-width="1.5"/>
+<ellipse cx="98" cy="88" rx="11" ry="8" fill="#e84a10" stroke="#b03000" stroke-width="1.5"/>
+<ellipse cx="34" cy="100" rx="10" ry="7" fill="#e84a10" stroke="#b03000" stroke-width="1.5"/>
+<ellipse cx="86" cy="100" rx="10" ry="7" fill="#e84a10" stroke="#b03000" stroke-width="1.5"/>
+<path d="M98 74 Q116 62 112 80" stroke="#e84a10" stroke-width="6" fill="none" stroke-linecap="round"/>
+<path d="M30 22 Q20 10 28 4 Q36 0 38 14" fill="#ff6600" stroke="#cc4400" stroke-width="1.5"/>
+<path d="M90 22 Q100 10 92 4 Q84 0 82 14" fill="#ff6600" stroke="#cc4400" stroke-width="1.5"/>
+`;}},
+{name:"IJshond",draw(s){s.innerHTML=`
+<ellipse cx="60" cy="78" rx="36" ry="26" fill="#a0d0ff" stroke="#4080cc" stroke-width="2.5"/>
+<ellipse cx="60" cy="50" rx="28" ry="26" fill="#60b0ff" stroke="#4080cc" stroke-width="2.5"/>
+<ellipse cx="38" cy="26" rx="10" ry="16" fill="#60b0ff" stroke="#4080cc" stroke-width="2" transform="rotate(-12 38 26)"/>
+<ellipse cx="82" cy="26" rx="10" ry="16" fill="#60b0ff" stroke="#4080cc" stroke-width="2" transform="rotate(12 82 26)"/>
+<ellipse cx="38" cy="28" rx="5" ry="9" fill="#d0eeff" transform="rotate(-12 38 28)"/>
+<ellipse cx="82" cy="28" rx="5" ry="9" fill="#d0eeff" transform="rotate(12 82 28)"/>
+<ellipse cx="60" cy="56" rx="18" ry="14" fill="#d0eeff"/>
+<circle cx="50" cy="44" r="6" fill="white" stroke="#4080cc" stroke-width="1.5"/>
+<circle cx="70" cy="44" r="6" fill="white" stroke="#4080cc" stroke-width="1.5"/>
+<circle cx="51" cy="45" r="3.5" fill="#1a2060"/>
+<circle cx="71" cy="45" r="3.5" fill="#1a2060"/>
+<circle cx="52" cy="43" r="1.2" fill="white"/>
+<circle cx="72" cy="43" r="1.2" fill="white"/>
+<ellipse cx="60" cy="62" rx="6" ry="4" fill="#6090cc"/>
+<ellipse cx="22" cy="88" rx="11" ry="8" fill="#a0d0ff" stroke="#4080cc" stroke-width="1.5"/>
+<ellipse cx="98" cy="88" rx="11" ry="8" fill="#a0d0ff" stroke="#4080cc" stroke-width="1.5"/>
+<ellipse cx="34" cy="100" rx="10" ry="7" fill="#a0d0ff" stroke="#4080cc" stroke-width="1.5"/>
+<ellipse cx="86" cy="100" rx="10" ry="7" fill="#a0d0ff" stroke="#4080cc" stroke-width="1.5"/>
+<path d="M98 74 Q116 62 112 80" stroke="#60b0ff" stroke-width="6" fill="none" stroke-linecap="round"/>
+<path d="M44 20 Q40 10 46 4" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+<path d="M76 20 Q80 10 74 4" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+`;}},
+{name:"Donderhond",draw(s){s.innerHTML=`
+<ellipse cx="60" cy="78" rx="36" ry="26" fill="#f0d020" stroke="#b09000" stroke-width="2.5"/>
+<ellipse cx="60" cy="50" rx="28" ry="26" fill="#f0d020" stroke="#b09000" stroke-width="2.5"/>
+<ellipse cx="38" cy="26" rx="10" ry="15" fill="#f0d020" stroke="#b09000" stroke-width="2" transform="rotate(-14 38 26)"/>
+<ellipse cx="82" cy="26" rx="10" ry="15" fill="#f0d020" stroke="#b09000" stroke-width="2" transform="rotate(14 82 26)"/>
+<ellipse cx="38" cy="28" rx="5" ry="8" fill="#fff8a0" transform="rotate(-14 38 28)"/>
+<ellipse cx="82" cy="28" rx="5" ry="8" fill="#fff8a0" transform="rotate(14 82 28)"/>
+<ellipse cx="60" cy="56" rx="18" ry="14" fill="#fff8a0"/>
+<circle cx="50" cy="44" r="6" fill="white" stroke="#b09000" stroke-width="1.5"/>
+<circle cx="70" cy="44" r="6" fill="white" stroke="#b09000" stroke-width="1.5"/>
+<circle cx="51" cy="45" r="3.5" fill="#1a1a00"/>
+<circle cx="71" cy="45" r="3.5" fill="#1a1a00"/>
+<circle cx="52" cy="43" r="1.2" fill="white"/>
+<circle cx="72" cy="43" r="1.2" fill="white"/>
+<ellipse cx="60" cy="62" rx="6" ry="4" fill="#c0a000"/>
+<ellipse cx="22" cy="88" rx="11" ry="8" fill="#f0d020" stroke="#b09000" stroke-width="1.5"/>
+<ellipse cx="98" cy="88" rx="11" ry="8" fill="#f0d020" stroke="#b09000" stroke-width="1.5"/>
+<ellipse cx="34" cy="100" rx="10" ry="7" fill="#f0d020" stroke="#b09000" stroke-width="1.5"/>
+<ellipse cx="86" cy="100" rx="10" ry="7" fill="#f0d020" stroke="#b09000" stroke-width="1.5"/>
+<path d="M98 74 Q116 62 112 80" stroke="#f0d020" stroke-width="6" fill="none" stroke-linecap="round"/>
+<path d="M54 16 L58 28 L52 28 L57 40" stroke="#f0a000" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+`;}},
+{name:"Aardhond",draw(s){s.innerHTML=`
+<ellipse cx="60" cy="78" rx="38" ry="27" fill="#8B5e3c" stroke="#5a3a1a" stroke-width="2.5"/>
+<ellipse cx="60" cy="50" rx="29" ry="26" fill="#8B5e3c" stroke="#5a3a1a" stroke-width="2.5"/>
+<ellipse cx="36" cy="30" rx="10" ry="17" fill="#8B5e3c" stroke="#5a3a1a" stroke-width="2" transform="rotate(-20 36 30)"/>
+<ellipse cx="84" cy="30" rx="10" ry="17" fill="#8B5e3c" stroke="#5a3a1a" stroke-width="2" transform="rotate(20 84 30)"/>
+<ellipse cx="36" cy="32" rx="5" ry="10" fill="#d4a070" transform="rotate(-20 36 32)"/>
+<ellipse cx="84" cy="32" rx="5" ry="10" fill="#d4a070" transform="rotate(20 84 32)"/>
+<ellipse cx="60" cy="57" rx="20" ry="15" fill="#d4a070"/>
+<circle cx="50" cy="44" r="6" fill="white" stroke="#5a3a1a" stroke-width="1.5"/>
+<circle cx="70" cy="44" r="6" fill="white" stroke="#5a3a1a" stroke-width="1.5"/>
+<circle cx="51" cy="45" r="3.5" fill="#1a0a00"/>
+<circle cx="71" cy="45" r="3.5" fill="#1a0a00"/>
+<circle cx="52" cy="43" r="1.2" fill="white"/>
+<circle cx="72" cy="43" r="1.2" fill="white"/>
+<ellipse cx="60" cy="63" rx="7" ry="5" fill="#a06040"/>
+<ellipse cx="20" cy="88" rx="12" ry="8" fill="#8B5e3c" stroke="#5a3a1a" stroke-width="1.5"/>
+<ellipse cx="100" cy="88" rx="12" ry="8" fill="#8B5e3c" stroke="#5a3a1a" stroke-width="1.5"/>
+<ellipse cx="33" cy="101" rx="11" ry="7" fill="#8B5e3c" stroke="#5a3a1a" stroke-width="1.5"/>
+<ellipse cx="87" cy="101" rx="11" ry="7" fill="#8B5e3c" stroke="#5a3a1a" stroke-width="1.5"/>
+<path d="M100 74 Q118 60 114 78" stroke="#8B5e3c" stroke-width="7" fill="none" stroke-linecap="round"/>
+<circle cx="44" cy="72" r="4" fill="#5a3a1a" opacity="0.5"/>
+<circle cx="62" cy="76" r="3" fill="#5a3a1a" opacity="0.5"/>
+<circle cx="78" cy="70" r="3.5" fill="#5a3a1a" opacity="0.5"/>
+`;}},
+];
+const cats=[
+{name:"Vuurkat",draw(s){s.innerHTML=`
+<ellipse cx="60" cy="76" rx="30" ry="22" fill="#ff6820" stroke="#cc4400" stroke-width="2.5"/>
+<ellipse cx="60" cy="48" rx="24" ry="22" fill="#ff6820" stroke="#cc4400" stroke-width="2.5"/>
+<polygon points="38,22 28,2 48,16" fill="#ff6820" stroke="#cc4400" stroke-width="2"/>
+<polygon points="82,22 92,2 72,16" fill="#ff6820" stroke="#cc4400" stroke-width="2"/>
+<polygon points="38,22 31,7 45,18" fill="#ffaa80"/>
+<polygon points="82,22 89,7 75,18" fill="#ffaa80"/>
+<ellipse cx="60" cy="54" rx="16" ry="12" fill="#ffaa80"/>
+<ellipse cx="50" cy="44" rx="6" ry="7" fill="#20cc60"/>
+<ellipse cx="70" cy="44" rx="6" ry="7" fill="#20cc60"/>
+<ellipse cx="50" cy="45" rx="2.5" ry="5" fill="#111"/>
+<ellipse cx="70" cy="45" rx="2.5" ry="5" fill="#111"/>
+<circle cx="51" cy="42" r="1.2" fill="white"/>
+<circle cx="71" cy="42" r="1.2" fill="white"/>
+<ellipse cx="60" cy="59" rx="5" ry="3" fill="#cc4444"/>
+<line x1="36" y1="50" x2="18" y2="46" stroke="#cc6630" stroke-width="1.8"/>
+<line x1="36" y1="54" x2="17" y2="54" stroke="#cc6630" stroke-width="1.8"/>
+<line x1="36" y1="58" x2="18" y2="62" stroke="#cc6630" stroke-width="1.8"/>
+<line x1="84" y1="50" x2="102" y2="46" stroke="#cc6630" stroke-width="1.8"/>
+<line x1="84" y1="54" x2="103" y2="54" stroke="#cc6630" stroke-width="1.8"/>
+<line x1="84" y1="58" x2="102" y2="62" stroke="#cc6630" stroke-width="1.8"/>
+<ellipse cx="20" cy="82" rx="9" ry="6" fill="#cc4400" stroke="#aa3300" stroke-width="1.5"/>
+<ellipse cx="100" cy="82" rx="9" ry="6" fill="#cc4400" stroke="#aa3300" stroke-width="1.5"/>
+<ellipse cx="34" cy="94" rx="8" ry="5.5" fill="#cc4400" stroke="#aa3300" stroke-width="1.5"/>
+<ellipse cx="86" cy="94" rx="8" ry="5.5" fill="#cc4400" stroke="#aa3300" stroke-width="1.5"/>
+<path d="M100 70 Q116 56 112 72" stroke="#ff6820" stroke-width="5" fill="none" stroke-linecap="round"/>
+`;}},
+{name:"Geestkat",draw(s){s.innerHTML=`
+<ellipse cx="60" cy="76" rx="30" ry="22" fill="#9966ff" stroke="#6633cc" stroke-width="2.5"/>
+<ellipse cx="60" cy="48" rx="24" ry="22" fill="#9966ff" stroke="#6633cc" stroke-width="2.5"/>
+<polygon points="36,20 24,0 48,14" fill="#9966ff" stroke="#6633cc" stroke-width="2"/>
+<polygon points="84,20 96,0 72,14" fill="#9966ff" stroke="#6633cc" stroke-width="2"/>
+<polygon points="36,20 28,5 46,16" fill="#ccbbff"/>
+<polygon points="84,20 92,5 74,16" fill="#ccbbff"/>
+<ellipse cx="60" cy="54" rx="16" ry="12" fill="#ccbbff"/>
+<ellipse cx="50" cy="44" rx="7" ry="8" fill="#ff44aa"/>
+<ellipse cx="70" cy="44" rx="7" ry="8" fill="#ff44aa"/>
+<ellipse cx="50" cy="45" rx="3" ry="6" fill="#111"/>
+<ellipse cx="70" cy="45" rx="3" ry="6" fill="#111"/>
+<circle cx="51" cy="41" r="1.4" fill="white"/>
+<circle cx="71" cy="41" r="1.4" fill="white"/>
+<ellipse cx="60" cy="59" rx="5" ry="3" fill="#aa44ff"/>
+<line x1="36" y1="50" x2="16" y2="45" stroke="#ccbbff" stroke-width="1.8"/>
+<line x1="36" y1="55" x2="15" y2="55" stroke="#ccbbff" stroke-width="1.8"/>
+<line x1="36" y1="60" x2="16" y2="65" stroke="#ccbbff" stroke-width="1.8"/>
+<line x1="84" y1="50" x2="104" y2="45" stroke="#ccbbff" stroke-width="1.8"/>
+<line x1="84" y1="55" x2="105" y2="55" stroke="#ccbbff" stroke-width="1.8"/>
+<line x1="84" y1="60" x2="104" y2="65" stroke="#ccbbff" stroke-width="1.8"/>
+<ellipse cx="20" cy="82" rx="9" ry="6" fill="#7744dd" stroke="#6633cc" stroke-width="1.5"/>
+<ellipse cx="100" cy="82" rx="9" ry="6" fill="#7744dd" stroke="#6633cc" stroke-width="1.5"/>
+<ellipse cx="34" cy="94" rx="8" ry="5.5" fill="#7744dd" stroke="#6633cc" stroke-width="1.5"/>
+<ellipse cx="86" cy="94" rx="8" ry="5.5" fill="#7744dd" stroke="#6633cc" stroke-width="1.5"/>
+<path d="M100 70 Q118 54 114 72" stroke="#9966ff" stroke-width="5" fill="none" stroke-linecap="round"/>
+<circle cx="46" cy="34" r="6" fill="#ff44aa" opacity="0.6"/>
+<circle cx="74" cy="34" r="6" fill="#ff44aa" opacity="0.6"/>
+`;}},
+{name:"Waterkat",draw(s){s.innerHTML=`
+<ellipse cx="60" cy="76" rx="30" ry="22" fill="#30b8f0" stroke="#0080c0" stroke-width="2.5"/>
+<ellipse cx="60" cy="48" rx="24" ry="22" fill="#30b8f0" stroke="#0080c0" stroke-width="2.5"/>
+<polygon points="36,20 24,0 48,14" fill="#30b8f0" stroke="#0080c0" stroke-width="2"/>
+<polygon points="84,20 96,0 72,14" fill="#30b8f0" stroke="#0080c0" stroke-width="2"/>
+<polygon points="36,20 28,5 46,16" fill="#aaeeff"/>
+<polygon points="84,20 92,5 74,16" fill="#aaeeff"/>
+<ellipse cx="60" cy="54" rx="16" ry="12" fill="#aaeeff"/>
+<ellipse cx="50" cy="44" rx="6" ry="7" fill="#0050a0"/>
+<ellipse cx="70" cy="44" rx="6" ry="7" fill="#0050a0"/>
+<ellipse cx="50" cy="45" rx="2.5" ry="5" fill="#001844"/>
+<ellipse cx="70" cy="45" rx="2.5" ry="5" fill="#001844"/>
+<circle cx="51" cy="42" r="1.2" fill="white"/>
+<circle cx="71" cy="42" r="1.2" fill="white"/>
+<ellipse cx="60" cy="59" rx="5" ry="3" fill="#0090d0"/>
+<line x1="36" y1="50" x2="16" y2="45" stroke="#aaeeff" stroke-width="1.8"/>
+<line x1="36" y1="55" x2="15" y2="55" stroke="#aaeeff" stroke-width="1.8"/>
+<line x1="84" y1="50" x2="104" y2="45" stroke="#aaeeff" stroke-width="1.8"/>
+<line x1="84" y1="55" x2="105" y2="55" stroke="#aaeeff" stroke-width="1.8"/>
+<ellipse cx="20" cy="82" rx="9" ry="6" fill="#0090c0" stroke="#0080c0" stroke-width="1.5"/>
+<ellipse cx="100" cy="82" rx="9" ry="6" fill="#0090c0" stroke="#0080c0" stroke-width="1.5"/>
+<ellipse cx="34" cy="94" rx="8" ry="5.5" fill="#0090c0" stroke="#0080c0" stroke-width="1.5"/>
+<ellipse cx="86" cy="94" rx="8" ry="5.5" fill="#0090c0" stroke="#0080c0" stroke-width="1.5"/>
+<path d="M100 70 Q118 54 114 72" stroke="#30b8f0" stroke-width="5" fill="none" stroke-linecap="round"/>
+<path d="M44 62 Q52 70 60 62 Q68 70 76 62" stroke="#0090d0" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+`;}},
+{name:"Bladerkat",draw(s){s.innerHTML=`
+<ellipse cx="60" cy="76" rx="30" ry="22" fill="#44cc44" stroke="#228822" stroke-width="2.5"/>
+<ellipse cx="60" cy="48" rx="24" ry="22" fill="#44cc44" stroke="#228822" stroke-width="2.5"/>
+<polygon points="34,18 20,0 46,14" fill="#44cc44" stroke="#228822" stroke-width="2"/>
+<polygon points="86,18 100,0 74,14" fill="#44cc44" stroke="#228822" stroke-width="2"/>
+<polygon points="34,18 24,4 44,15" fill="#aaffaa"/>
+<polygon points="86,18 96,4 76,15" fill="#aaffaa"/>
+<ellipse cx="60" cy="54" rx="16" ry="12" fill="#aaffaa"/>
+<ellipse cx="50" cy="44" rx="6" ry="7" fill="#aa4400"/>
+<ellipse cx="70" cy="44" rx="6" ry="7" fill="#aa4400"/>
+<ellipse cx="50" cy="45" rx="2.5" ry="5" fill="#220a00"/>
+<ellipse cx="70" cy="45" rx="2.5" ry="5" fill="#220a00"/>
+<circle cx="51" cy="42" r="1.2" fill="white"/>
+<circle cx="71" cy="42" r="1.2" fill="white"/>
+<ellipse cx="60" cy="59" rx="5" ry="3" fill="#228822"/>
+<line x1="36" y1="50" x2="16" y2="44" stroke="#228822" stroke-width="1.8"/>
+<line x1="36" y1="55" x2="15" y2="55" stroke="#228822" stroke-width="1.8"/>
+<line x1="84" y1="50" x2="104" y2="44" stroke="#228822" stroke-width="1.8"/>
+<line x1="84" y1="55" x2="105" y2="55" stroke="#228822" stroke-width="1.8"/>
+<ellipse cx="20" cy="82" rx="9" ry="6" fill="#229922" stroke="#228822" stroke-width="1.5"/>
+<ellipse cx="100" cy="82" rx="9" ry="6" fill="#229922" stroke="#228822" stroke-width="1.5"/>
+<ellipse cx="34" cy="94" rx="8" ry="5.5" fill="#229922" stroke="#228822" stroke-width="1.5"/>
+<ellipse cx="86" cy="94" rx="8" ry="5.5" fill="#229922" stroke="#228822" stroke-width="1.5"/>
+<path d="M100 70 Q118 54 114 72" stroke="#44cc44" stroke-width="5" fill="none" stroke-linecap="round"/>
+<ellipse cx="34" cy="18" rx="12" ry="7" fill="#228822" transform="rotate(-30 34 18)"/>
+<ellipse cx="86" cy="18" rx="12" ry="7" fill="#228822" transform="rotate(30 86 18)"/>
+`;}},
+];
+const dAtks=[{name:"Vuurbal",dmg:12},{name:"Bijten",dmg:9},{name:"Sprong",dmg:11},{name:"Geblaf",dmg:7},{name:"Vlam",dmg:14}];
+const cAtks=[{name:"Klauw",dmg:10},{name:"Magie",dmg:13},{name:"Sissen",dmg:7},{name:"Schaduw",dmg:11},{name:"Krabben",dmg:9}];
+const MAX=60;
+let dHp=MAX,cHp=MAX,dSc=0,cSc=0,rnd=1,maxR=3,turn='dog',busy=false,selD=0,selC=0;
+function drawD(i){dogs[i].draw(document.getElementById('dogSvg'));}
+function drawC(i){cats[i].draw(document.getElementById('catSvg'));}
+function upBars(){
+  const d=Math.max(0,dHp),c=Math.max(0,cHp);
+  document.getElementById('hpIn').style.width=(d/MAX*100)+'%';
+  document.getElementById('cpIn').style.width=(c/MAX*100)+'%';
+  document.getElementById('hpIn').style.background=d>30?'#2ecc71':d>15?'#f39c12':'#e74c3c';
+  document.getElementById('cpIn').style.background=c>30?'#9b59b6':c>15?'#f39c12':'#e74c3c';
+  document.getElementById('hpN').textContent=d+'/'+MAX;
+  document.getElementById('cpN').textContent=c+'/'+MAX;
+  document.getElementById('scr').textContent=dSc+' - '+cSc;
+  document.getElementById('rnd').textContent='Ronde '+Math.min(rnd,maxR)+'/'+maxR;
+}
+function setMsg(m){document.getElementById('msg').textContent=m;}
+function setTI(m){document.getElementById('tinfo').textContent=m;}
+function showFx(side){
+  const e=document.getElementById('fx');
+  e.style.display='block';e.style.opacity='1';
+  e.style.left=side==='cat'?'52%':'14%';e.style.top='20%';
+  setTimeout(()=>{e.style.display='none';},500);
+}
+function anim(who,cb){
+  const e=document.getElementById(who==='dog'?'dogSvg':'catSvg');
+  if(who==='dog')e.style.left='28%';else e.style.right='28%';
+  setTimeout(()=>{if(who==='dog')e.style.left='3%';else e.style.right='3%';cb();},260);
+}
+function doAtk(who,atk){
+  if(busy||turn!==who)return;
+  busy=true;
+  anim(who,()=>{
+    const tgt=who==='dog'?'cat':'dog';
+    showFx(tgt);
+    if(who==='dog'){cHp-=atk.dmg;if(cHp<0)cHp=0;}
+    else{dHp-=atk.dmg;if(dHp<0)dHp=0;}
+    const nm=who==='dog'?dogs[selD].name:cats[selC].name;
+    setMsg(nm+' gebruikt '+atk.name+'! (-'+atk.dmg+' HP)');
+    upBars();
+    setTimeout(()=>{
+      if((who==='dog'&&cHp<=0)||(who==='cat'&&dHp<=0)){
+        if(who==='dog')dSc++;else cSc++;
+        upBars();
+        if(dSc+cSc>=maxR){endGame();return;}
+        rnd++;setTimeout(resetRnd,900);
+      } else {
+        turn=who==='dog'?'cat':'dog';busy=false;
+        setTI(turn==='dog'?'Speler 1 ('+dogs[selD].name+') is aan de beurt!':'Speler 2 ('+cats[selC].name+') is aan de beurt!');
+        setMsg('Kies een aanval!');setBtns();
+      }
+    },750);
+  });
+}
+function setBtns(){
+  dAtks.forEach(a=>{const b=document.getElementById('d-'+a.name);if(b)b.disabled=(turn!=='dog'||busy);});
+  cAtks.forEach(a=>{const b=document.getElementById('c-'+a.name);if(b)b.disabled=(turn!=='cat'||busy);});
+}
+function buildBtns(){
+  const p1=document.getElementById('p1b'),p2=document.getElementById('p2b');
+  p1.innerHTML='<span style="font-size:11px;color:#aaa;align-self:center;">🐕 Speler 1:</span>';
+  p2.innerHTML='<span style="font-size:11px;color:#aaa;align-self:center;">🐈 Speler 2:</span>';
+  dAtks.forEach(a=>{const b=document.createElement('button');b.className='ab dog';b.id='d-'+a.name;b.textContent=a.name+' ('+a.dmg+')';b.onclick=()=>doAtk('dog',a);p1.appendChild(b);});
+  cAtks.forEach(a=>{const b=document.createElement('button');b.className='ab cat';b.id='c-'+a.name;b.textContent=a.name+' ('+a.dmg+')';b.onclick=()=>doAtk('cat',a);p2.appendChild(b);});
+  setBtns();
+}
+function resetRnd(){dHp=MAX;cHp=MAX;turn='dog';busy=false;upBars();setMsg('Nieuwe ronde!');setTI('Speler 1 ('+dogs[selD].name+') begint!');setBtns();}
+function endGame(){busy=true;const w=dSc>cSc?dogs[selD].name+' wint!':cSc>dSc?cats[selC].name+' wint!':'Gelijkspel!';setMsg(w+' ('+dSc+'-'+cSc+')');setTI('Klik Nieuw spel om opnieuw te spelen!');[...document.querySelectorAll('.ab')].forEach(b=>b.disabled=true);}
+function startGame(){dHp=MAX;cHp=MAX;dSc=0;cSc=0;rnd=1;turn='dog';busy=false;drawD(selD);drawC(selC);document.getElementById('dLbl').textContent=dogs[selD].name;document.getElementById('cLbl').textContent=cats[selC].name;upBars();buildBtns();setMsg('Gevecht begint!');setTI('Speler 1 ('+dogs[selD].name+') is aan de beurt!');}
+function toggleSel(){const s=document.getElementById('sel');s.style.display=s.style.display==='block'?'none':'block';buildPick();}
+function buildPick(){
+  const dp=document.getElementById('dp'),cp=document.getElementById('cp');
+  dp.innerHTML='';cp.innerHTML='';
+  dogs.forEach((d,i)=>{const b=document.createElement('button');b.className='pb'+(i===selD?' da':'');b.textContent=d.name;b.onclick=()=>{selD=i;[...document.querySelectorAll('#dp .pb')].forEach((x,j)=>x.className='pb'+(j===i?' da':''));drawD(i);};dp.appendChild(b);});
+  cats.forEach((c,i)=>{const b=document.createElement('button');b.className='pb'+(i===selC?' ca':'');b.textContent=c.name;b.onclick=()=>{selC=i;[...document.querySelectorAll('#cp .pb')].forEach((x,j)=>x.className='pb'+(j===i?' ca':''));drawC(i);};cp.appendChild(b);});
+}
+function confirmSel(){document.getElementById('sel').style.display='none';startGame();}
+drawD(0);drawC(0);buildBtns();upBars();setMsg('Kies je dier of start meteen!');
+</script>
+</body>
+</html>

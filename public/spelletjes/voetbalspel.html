@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Voetbalspel: Samen tegen de Bot-Keeper</title>
+<style>
+  body {
+    margin: 0;
+    background: linear-gradient(#87CEEB, #b8e0f5);
+    font-family: 'Trebuchet MS', Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+  }
+  h1 {
+    color: #2d5016;
+    margin: 10px 0 5px 0;
+    text-shadow: 2px 2px 0 white;
+  }
+  #scorebar {
+    font-size: 22px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 6px;
+  }
+  canvas {
+    background: #4CAF50;
+    border: 6px solid #2d5016;
+    border-radius: 10px;
+  }
+  #info {
+    max-width: 700px;
+    text-align: center;
+    margin-top: 8px;
+    color: #333;
+    font-size: 15px;
+  }
+  #restartBtn {
+    margin-top: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    background: #2d5016;
+    color: white;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h1>⚽ Samen tegen de Bot-Keeper ⚽</h1>
+<div id="scorebar">Doelpunten: 0 &nbsp;|&nbsp; Tijd: 60</div>
+<canvas id="game" width="700" height="420"></canvas>
+<div id="info">
+  <b>Speler 1 (blauw):</b> pijltjestoetsen bewegen, <b>spatie</b> = trap op doel, <b>Shift</b> = pass naar speler 2<br>
+  <b>Speler 2 (rood):</b> W A S D bewegen, <b>Enter</b> = trap op doel, <b>Ctrl</b> = pass naar speler 1<br>
+  Speel de bal naar elkaar door en probeer 'm langs de gele bot-keeper het doel in te schieten!
+</div>
+<button id="restartBtn">Opnieuw beginnen</button>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// Doel rechts
+const goal = { x: W - 15, yTop: H/2 - 90, yBot: H/2 + 90 };
+
+let score = 0;
+let timeLeft = 60;
+let gameOver = false;
+let countdown = 3;
+let started = false;
+
+// Spelers
+const p1 = { x: 150, y: H/2, r: 16, color: '#1565C0', speed: 4.2 };
+const p2 = { x: 250, y: H/2 + 60, r: 16, color: '#C62828', speed: 4.2 };
+
+// Bot keeper
+const bot = { x: W - 40, y: H/2, r: 15, color: '#F9A825', speed: 1.0 };
+
+// Bal
+const ball = { x: 200, y: H/2, r: 10, vx: 0, vy: 0, owner: p1 };
+
+const keys = {};
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (e.key === ' ') e.preventDefault();
+});
+document.addEventListener('keyup', e => keys[e.key] = false);
+
+function dist(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function shoot(player) {
+  if (ball.owner !== player) return;
+  const dx = goal.x - ball.x;
+  const dy = (goal.yTop + goal.yBot) / 2 - ball.y;
+  const len = Math.hypot(dx, dy);
+  ball.vx = (dx / len) * 7;
+  ball.vy = (dy / len) * 7;
+  ball.owner = null;
+}
+
+function pass(player, teammate) {
+  if (ball.owner !== player) return;
+  const dx = teammate.x - ball.x;
+  const dy = teammate.y - ball.y;
+  const len = Math.hypot(dx, dy) || 1;
+  ball.vx = (dx / len) * 7;
+  ball.vy = (dy / len) * 7;
+  ball.owner = null;
+}
+
+function movePlayer(p, up, down, left, right) {
+  if (keys[up]) p.y -= p.speed;
+  if (keys[down]) p.y += p.speed;
+  if (keys[left]) p.x -= p.speed;
+  if (keys[right]) p.x += p.speed;
+  p.x = Math.max(p.r, Math.min(W - p.r, p.x));
+  p.y = Math.max(p.r, Math.min(H - p.r, p.y));
+}
+
+function update() {
+  if (gameOver || !started) return;
+
+  movePlayer(p1, 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight');
+  movePlayer(p2, 'w', 's', 'a', 'd');
+
+  if (keys[' ']) shoot(p1);
+  if (keys['Enter']) shoot(p2);
+  if (keys['Shift']) pass(p1, p2);
+  if (keys['Control']) pass(p2, p1);
+
+  // Bal volgt eigenaar
+  if (ball.owner) {
+    ball.x = ball.owner.x + ball.r + 6;
+    ball.y = ball.owner.y;
+  } else {
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+    ball.vx *= 0.99;
+    ball.vy *= 0.99;
+
+    // Bal botst tegen boven/onder rand
+    if (ball.y - ball.r < 0) { ball.y = ball.r; ball.vy *= -1; }
+    if (ball.y + ball.r > H) { ball.y = H - ball.r; ball.vy *= -1; }
+
+    // Bal botst tegen linkerrand
+    if (ball.x - ball.r < 0) { ball.x = ball.r; ball.vx *= -1; }
+
+    // Bal botst tegen rechterrand, BEHALVE in het doelgat
+    const inGoalGap = ball.y > goal.yTop && ball.y < goal.yBot;
+    if (!inGoalGap && ball.x + ball.r > W) {
+      ball.x = W - ball.r;
+      ball.vx *= -1;
+    }
+
+    // Bal oppikken door speler als niemand hem heeft
+    [p1, p2].forEach(p => {
+      if (dist(p, ball) < p.r + ball.r + 4) {
+        ball.owner = p;
+        ball.vx = 0; ball.vy = 0;
+      }
+    });
+  }
+
+  // Bot keeper beweegt richting bal, maar alleen als de bal dichtbij genoeg is
+  const distToGoal = goal.x - ball.x;
+  if (distToGoal < 260) {
+    const targetY = Math.max(goal.yTop + 10, Math.min(goal.yBot - 10, ball.y));
+    if (bot.y < targetY) bot.y += bot.speed;
+    if (bot.y > targetY) bot.y -= bot.speed;
+  } else {
+    // anders rustig terug naar het midden van het doel
+    if (bot.y < H/2 - 2) bot.y += bot.speed * 0.5;
+    if (bot.y > H/2 + 2) bot.y -= bot.speed * 0.5;
+  }
+
+  // Bot blokkeert bal
+  if (dist(bot, ball) < bot.r + ball.r - 4) {
+    ball.vx = -Math.abs(ball.vx) * 0.8 - 1;
+    ball.vy += (Math.random() - 0.5) * 4;
+  }
+
+  // Doelpunt check
+  if (ball.x + ball.r > goal.x && ball.y > goal.yTop && ball.y < goal.yBot) {
+    score++;
+    resetBall();
+  }
+}
+
+function resetBall() {
+  ball.owner = p1;
+  ball.vx = 0; ball.vy = 0;
+  p1.x = 150; p1.y = H/2;
+  p2.x = 250; p2.y = H/2 + 60;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Middenlijn
+  ctx.strokeStyle = 'white';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(W/2, H/2, 50, 0, Math.PI*2);
+  ctx.stroke();
+
+  // Doel
+  ctx.fillStyle = 'white';
+  ctx.fillRect(goal.x, goal.yTop, 10, goal.yBot - goal.yTop);
+  ctx.strokeRect(W-8, goal.yTop-10, 8, goal.yBot-goal.yTop+20);
+
+  // Spelers
+  [p1, p2].forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+  });
+
+  // Bot
+  ctx.beginPath();
+  ctx.arc(bot.x, bot.y, bot.r, 0, Math.PI*2);
+  ctx.fillStyle = bot.color;
+  ctx.fill();
+  ctx.font = '12px Arial';
+  ctx.fillStyle = 'black';
+  ctx.textAlign = 'center';
+  ctx.fillText('BOT', bot.x, bot.y - 25);
+
+  // Bal
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+  ctx.fillStyle = 'white';
+  ctx.fill();
+  ctx.strokeStyle = 'black';
+  ctx.stroke();
+
+  if (gameOver) {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'white';
+    ctx.font = '36px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Tijd voorbij!', W/2, H/2 - 20);
+    ctx.font = '26px Arial';
+    ctx.fillText('Jullie scoorden ' + score + ' keer!', W/2, H/2 + 20);
+  } else if (!started) {
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 70px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(countdown > 0 ? countdown : 'Start!', W/2, H/2 + 20);
+  }
+}
+
+function loop() {
+  update();
+  draw();
+  document.getElementById('scorebar').textContent =
+    'Doelpunten: ' + score + ' | Tijd: ' + timeLeft;
+  requestAnimationFrame(loop);
+}
+
+function startCountdown() {
+  started = false;
+  countdown = 3;
+  const cdId = setInterval(() => {
+    countdown--;
+    if (countdown < 0) {
+      clearInterval(cdId);
+      started = true;
+    }
+  }, 800);
+}
+
+let timerId = setInterval(() => {
+  if (gameOver || !started) return;
+  timeLeft--;
+  if (timeLeft <= 0) {
+    timeLeft = 0;
+    gameOver = true;
+  }
+}, 1000);
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  score = 0;
+  timeLeft = 60;
+  gameOver = false;
+  resetBall();
+  startCountdown();
+});
+
+resetBall();
+startCountdown();
+loop();
+</script>
+</body>
+</html>
