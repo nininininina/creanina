@@ -65,6 +65,12 @@ export default function Home() {
             tekenen
           </Link>
           <Link
+            href="/spelletjes"
+            style={{ margin: 0, color: "#d9638c", textDecoration: "none" }}
+          >
+            spelletjes
+          </Link>
+          <Link
             href="/over-mij"
             style={{ margin: 0, color: "#9a7cc0", textDecoration: "none" }}
           >
@@ -77,7 +83,7 @@ export default function Home() {
             height: "2px",
             marginTop: "0.25rem",
             background:
-              "linear-gradient(90deg, #b05555, #cc8844, #c9b536, #6fa86f, #5b8fc9, #9a7cc0)",
+              "linear-gradient(90deg, #b05555, #cc8844, #c9b536, #6fa86f, #5b8fc9, #d9638c, #9a7cc0)",
           }}
         />
       </div>
