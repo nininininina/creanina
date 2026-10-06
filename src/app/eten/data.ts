@@ -1,0 +1,76 @@
+// Hier staan alle recepten.
+// De foto zet je in de map public/eten, met dezelfde naam als bij "foto".
+// Bijvoorbeeld: public/eten/pannenkoeken.jpg
+
+export const recepten = [
+  {
+    naam: "pannenkoeken",
+    titel: "Pannenkoeken",
+    foto: "pannenkoeken.jpg",
+    tijd: "30 minuten",
+    personen: "4 personen",
+    inhoud: "Dunne, goudbruine pannenkoeken. Lekker met suiker, stroop of fruit.",
+    hulp: true,
+    ingredienten: ["250 gram bloem", "2 eieren", "half liter melk", "een snufje zout", "boter om te bakken"],
+    stappen: [
+      "Doe de bloem en het zout in een grote kom.",
+      "Maak een kuiltje in het midden en breek de eieren erin.",
+      "Giet er een beetje melk bij en roer met een garde tot het glad is.",
+      "Doe er langzaam de rest van de melk bij en blijf roeren.",
+      "Laat een klontje boter smelten in een hete pan.",
+      "Schep er een soeplepel beslag in en draai de pan, zodat het beslag overal komt.",
+      "Draai de pannenkoek om als de bovenkant droog is. Bak de andere kant ook goudbruin.",
+    ],
+  },
+  {
+    naam: "fruitspiesjes",
+    titel: "Regenboog-fruitspiesjes",
+    foto: "fruitspiesjes.jpg",
+    tijd: "15 minuten",
+    personen: "4 personen",
+    inhoud: "Stukjes fruit in alle kleuren van de regenboog op een stokje.",
+    hulp: false,
+    ingredienten: ["aardbeien (rood)", "mandarijn (oranje)", "ananas (geel)", "kiwi (groen)", "blauwe bessen (blauw)", "druiven (paars)", "satéstokjes"],
+    stappen: [
+      "Was het fruit goed.",
+      "Schil de mandarijn, de kiwi en de ananas.",
+      "Snij alles in stukjes die niet te groot zijn.",
+      "Prik het fruit op een stokje, in de volgorde van de regenboog: rood, oranje, geel, groen, blauw, paars.",
+      "Leg de spiesjes mooi op een bord en smullen maar!",
+    ],
+  },
+  {
+    naam: "smoothie",
+    titel: "Roze aardbeiensmoothie",
+    foto: "smoothie.jpg",
+    tijd: "10 minuten",
+    personen: "2 personen",
+    inhoud: "Een koud, zacht drankje met aardbeien en banaan. Mooi roze!",
+    hulp: true,
+    ingredienten: ["250 gram aardbeien", "1 banaan", "1 beker yoghurt", "een scheutje melk", "een lepel honing (als je wil)"],
+    stappen: [
+      "Was de aardbeien en haal de groene blaadjes eraf.",
+      "Pel de banaan en breek hem in stukken.",
+      "Doe alles in de blender.",
+      "Mix tot het een glad drankje is. Vraag hulp bij de blender!",
+      "Giet de smoothie in twee glazen. Leg er een aardbei bovenop.",
+    ],
+  },
+  {
+    naam: "croque",
+    titel: "Croque monsieur",
+    foto: "croque.jpg",
+    tijd: "15 minuten",
+    personen: "1 persoon",
+    inhoud: "Een warme tosti met kaas en ham, knapperig aan de buitenkant.",
+    hulp: true,
+    ingredienten: ["2 sneetjes brood", "1 sneetje ham", "2 sneetjes kaas", "een beetje boter"],
+    stappen: [
+      "Smeer een beetje boter op de buitenkant van de sneetjes brood.",
+      "Leg kaas, ham en nog een sneetje kaas op de binnenkant van één sneetje.",
+      "Leg het andere sneetje erop, met de boterkant naar buiten.",
+      "Bak hem in een tosti-ijzer of een pan tot hij goudbruin is en de kaas smelt.",
+      "Snij hem in twee driehoekjes. Pas op, hij is heet!",
+    ],
+  },
+];
