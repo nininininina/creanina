@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Ik Leer Typen!</title>
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Comic Sans MS', 'Trebuchet MS', sans-serif;
+    background: linear-gradient(135deg, #a8e6ff, #ffd6e8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+  }
+
+  h1 {
+    color: #ff6b6b;
+    font-size: 2.2em;
+    text-shadow: 2px 2px 0px #fff;
+    margin-bottom: 5px;
+    text-align: center;
+  }
+
+  .subtitel {
+    color: #555;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .kaart {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    max-width: 700px;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* ---------- WELKOM SCHERM ---------- */
+  .veld-groep {
+    text-align: left;
+    margin-bottom: 18px;
+  }
+
+  .veld-groep label {
+    display: block;
+    font-weight: bold;
+    color: #ff6b6b;
+    margin-bottom: 6px;
+    font-size: 1.1em;
+  }
+
+  .veld-groep input {
+    width: 100%;
+    font-size: 1.2em;
+    padding: 10px;
+    border: 3px solid #a8e6ff;
+    border-radius: 12px;
+    outline: none;
+    font-family: inherit;
+  }
+
+  .veld-groep input:focus {
+    border-color: #ff6b6b;
+  }
+
+  .emoji-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .emoji-optie {
+    font-size: 2em;
+    background: #f5f5f5;
+    border: 3px solid transparent;
+    border-radius: 14px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+
+  .emoji-optie:hover {
+    transform: scale(1.15);
+  }
+
+  .emoji-optie.gekozen {
+    border-color: #4caf50;
+    background: #e8f9e8;
+  }
+
+  /* ---------- ALGEMENE KNOPPEN ---------- */
+  button {
+    margin-top: 15px;
+    font-size: 1.2em;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 12px;
+    background: #4caf50;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 4px 0 #388e3c;
+  }
+
+  button:active {
+    box-shadow: 0 1px 0 #388e3c;
+    transform: translateY(3px);
+  }
+
+  button:disabled {
+    background: #ccc;
+    box-shadow: 0 4px 0 #999;
+    cursor: not-allowed;
+  }
+
+  /* ---------- HOOFDPAGINA / APP-SCHIL ---------- */
+  .app-schil {
+    max-width: 800px;
+    width: 100%;
+  }
+
+  .app-inhoud {
+    background: white;
+    border-radius: 20px 20px 0 0;
+    padding: 45px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    min-height: 620px;
+    text-align: center;
+  }
+
+  .tab-inhoud { display: none; }
+  .tab-inhoud.actief { display: block; }
+
+  /* ---------- ONDERSTE MENUBALK ---------- */
+  .menubalk {
+    display: flex;
+    background: white;
+    border-radius: 0 0 20px 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    border-top: 2px solid #f0f0f0;
+    overflow: hidden;
+  }
+
+  .menu-knop {
+    flex: 1;
+    background: white;
+    border: none;
+    box-shadow: none;
+    margin: 0;
+    padding: 12px 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    color: #888;
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 0.85em;
+    cursor: pointer;
+    border-radius: 0;
+  }
+
+  .menu-knop:active { transform: none; box-shadow: none; }
+
+  .menu-knop .menu-icoon {
+    font-size: 1.6em;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+  }
+
+  .menu-knop.actief {
+    color: #ff6b6b;
+  }
+
+  .menu-knop.actief .menu-icoon {
+    background: #ffe0e0;
+  }
+
+  /* ---------- HOME TAB: LEVEL-PAD ---------- */
+  .levelpad-header {
+    text-align: left;
+    margin-bottom: 10px;
+  }
+
+  .level-titel {
+    color: #ff6b6b;
+    font-size: 1.6em;
+    font-weight: bold;
+  }
+
+  .levelpad {
+    position: relative;
+    width: 100%;
+    height: 480px;
+    max-height: 60vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .pad-bolletje {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #b39ddb;
+    border-radius: 50%;
+    background: white;
+    transform: translate(-50%, -50%);
+  }
+
+  .start-badge {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    background: #ffd6e8;
+    border: 3px solid #ff6b6b;
+    color: #ff6b6b;
+    font-weight: bold;
+    font-size: 0.8em;
+    border-radius: 20px;
+    padding: 5px 12px;
+    white-space: nowrap;
+  }
+
+  .level-knop-pad {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #ffd54f;
+    border: 4px solid #fb8c00;
+    color: #7c4a00;
+    font-weight: bold;
+    font-size: 1.3em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #fb8c00;
+    margin-top: 0;
+    padding: 0;
+    font-family: inherit;
+  }
+
+  .level-knop-pad:active {
+    box-shadow: 0 2px 0 #fb8c00;
+    transform: translate(-50%, -50%) translateY(3px);
+  }
+
+  .melding-toast {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff3cd;
+    border: 3px solid #ffb74d;
+    color: #7c4a00;
+    font-weight: bold;
+    border-radius: 14px;
+    padding: 8px 16px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .melding-toast.zichtbaar {
+    opacity: 1;
+  }
+
+  /* ---------- LES SCHERMEN ---------- */
+  .les-titel {
+    color: #ff6b6b;
+    font-size: 1.6em;
+    margin-bottom: 15px;
+  }
+
+  .toetsenbord {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin: 20px 0;
+  }
+
+  .toetsenbord-rij {
+    display: flex;
+    gap: 6px;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .toets {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: #eef1f5;
+    border: 2px solid #ccd3dc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #666;
+  }
+
+  .toets-actief {
+    background: #4caf50;
+    border-color: #388e3c;
+    color: white;
+    transform: scale(1.15);
+    box-shadow: 0 0 0 4px #c8f7c5;
+  }
+
+  .vinger-tip {
+    font-size: 1.1em;
+    color: #555;
+    margin: 10px 0 20px;
+  }
+
+  .vinger-tip .icoon {
+    font-size: 1.6em;
+    vertical-align: middle;
+  }
+
+  .oefen-balk {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 30px 0;
+  }
+
+  .oefen-letter {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.4em;
+    color: white;
+    transition: transform 0.15s, background 0.2s;
+  }
+
+  .oefen-letter.rood { background: #ff6b6b; }
+  .oefen-letter.groen { background: #4caf50; transform: scale(1.1); }
+
+  input#oefenInvoer {
+    font-size: 1.3em;
+    padding: 12px;
+    width: 60%;
+    border: 3px solid #a8e6ff;
+    border-radius: 12px;
+    text-align: center;
+    outline: none;
+    font-family: inherit;
+  }
+
+  input#oefenInvoer:focus { border-color: #ff6b6b; }
+
+  /* ---------- HOME TAB (oud, nog gebruikt op andere plekken) ---------- */
+  .home-avatar {
+    font-size: 4em;
+    margin-bottom: 5px;
+  }
+
+  .home-welkom {
+    color: #ff6b6b;
+    margin-bottom: 5px;
+  }
+
+  .snelkoppelingen {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 25px;
+    flex-wrap: wrap;
+  }
+
+  .snelkoppeling {
+    background: #fff3cd;
+    border-radius: 16px;
+    padding: 18px 20px;
+    cursor: pointer;
+    min-width: 130px;
+    border: 3px solid transparent;
+    transition: transform 0.15s;
+  }
+
+  .snelkoppeling:hover {
+    transform: scale(1.05);
+    border-color: #ffb74d;
+  }
+
+  .snelkoppeling .icoon {
+    font-size: 2.2em;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  /* ---------- MEER TAB (en andere dingen) ---------- */
+  .profiel-kaart {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #f5f9ff;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 20px;
+    text-align: left;
+  }
+
+  .profiel-kaart .icoon { font-size: 3em; }
+
+  .info-lijst {
+    text-align: left;
+    background: #fff8e8;
+    border-radius: 16px;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+  }
+
+  .info-lijst div {
+    padding: 6px 0;
+    border-bottom: 1px dashed #e0d5b8;
+  }
+
+  .info-lijst div:last-child { border-bottom: none; }
+
+  .tip-kaart {
+    background: #e8f9e8;
+    border-radius: 16px;
+    padding: 15px 20px;
+    text-align: left;
+    color: #2e7d32;
+  }
+
+  /* ---------- SPEL TAB ---------- */
+  .stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+  }
+
+  .stat {
+    background: #fff3cd;
+    border-radius: 12px;
+    padding: 10px 15px;
+    min-width: 70px;
+  }
+
+  .stat-label {
+    font-size: 0.75em;
+    color: #888;
+  }
+
+  .stat-waarde {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #ff6b6b;
+  }
+
+  .woord-scherm {
+    font-size: 2.4em;
+    font-weight: bold;
+    letter-spacing: 3px;
+    margin: 25px 0;
+    min-height: 60px;
+    color: #333;
+  }
+
+  .letter-goed { color: #4caf50; }
+  .letter-fout { color: #ff3b3b; text-decoration: underline; }
+
+  input#invoer {
+    font-size: 1.3em;
+    padding: 12px;
+    width: 80%;
+    border: 3px solid #a8e6ff;
+    border-radius: 12px;
+    text-align: center;
+    outline: none;
+    font-family: inherit;
+  }
+
+  input#invoer:focus { border-color: #ff6b6b; }
+
+  .melding {
+    margin-top: 15px;
+    font-size: 1.2em;
+    font-weight: bold;
+    min-height: 30px;
+  }
+
+  .goed { color: #4caf50; }
+  .klaar { color: #ff6b6b; font-size: 1.4em; }
+
+  .verborgen { display: none !important; }
+
+  .foutmelding {
+    color: #ff3b3b;
+    font-size: 0.95em;
+    margin-top: -10px;
+    margin-bottom: 10px;
+    min-height: 18px;
+  }
+</style>
+</head>
+<body>
+
+<h1>⌨️ Ik Leer Typen!</h1>
+<p class="subtitel">Word een echte typkampioen</p>
+
+<!-- ===================== INLOG SCHERM (EERSTE PAGINA) ===================== -->
+<div class="kaart" id="inlogScherm">
+  <div style="font-size: 3.5em; margin-bottom: 5px;">🔑</div>
+  <h2 style="color: #ff6b6b; margin-bottom: 5px;">Welkom terug!</h2>
+  <p class="subtitel">Heb je al een wachtwoord?</p>
+
+  <div class="veld-groep">
+    <label for="inlogNaamInvoer">👋 Wat is jouw naam?</label>
+    <input type="text" id="inlogNaamInvoer" placeholder="Typ je naam..." maxlength="20">
+  </div>
+
+  <div class="veld-groep">
+    <label for="inlogWachtwoordInvoer">🔒 Wat is jouw wachtwoord?</label>
+    <input type="password" id="inlogWachtwoordInvoer" placeholder="Typ je wachtwoord..." maxlength="20">
+  </div>
+
+  <div class="foutmelding" id="inlogFoutmelding"></div>
+
+  <button id="inlogKnop">Inloggen 🔓</button>
+  <br>
+  <button id="ikBenNieuwKnop" style="background:#42a5f5; box-shadow:0 4px 0 #1e88e5; margin-top:10px;">✨ Ik ben nieuw</button>
+</div>
+
+<!-- ===================== WELKOM SCHERM (REGISTREREN) ===================== -->
+<div class="kaart verborgen" id="welkomScherm">
+  <div class="veld-groep">
+    <label for="naamInvoer">👋 Wat is jouw naam?</label>
+    <input type="text" id="naamInvoer" placeholder="Typ je naam..." maxlength="20">
+  </div>
+
+  <div class="veld-groep">
+    <label for="leeftijdInvoer">🎂 Hoe oud ben jij?</label>
+    <input type="number" id="leeftijdInvoer" placeholder="Typ je leeftijd..." min="4" max="17">
+  </div>
+
+  <div class="veld-groep">
+    <label for="wachtwoordInvoer">🔒 Verzin een wachtwoord (minstens 5 tekens)</label>
+    <input type="password" id="wachtwoordInvoer" placeholder="Typ je wachtwoord..." maxlength="20">
+  </div>
+
+  <div class="veld-groep">
+    <label>😀 Kies jouw avatar</label>
+    <div class="emoji-grid" id="emojiGrid">
+      <div class="emoji-optie" data-emoji="🐶">🐶</div>
+      <div class="emoji-optie" data-emoji="🐱">🐱</div>
+      <div class="emoji-optie" data-emoji="🦊">🦊</div>
+      <div class="emoji-optie" data-emoji="🐼">🐼</div>
+      <div class="emoji-optie" data-emoji="🦁">🦁</div>
+      <div class="emoji-optie" data-emoji="🐸">🐸</div>
+      <div class="emoji-optie" data-emoji="🦄">🦄</div>
+      <div class="emoji-optie" data-emoji="🐵">🐵</div>
+      <div class="emoji-optie" data-emoji="🐧">🐧</div>
+      <div class="emoji-optie" data-emoji="🐙">🐙</div>
+      <div class="emoji-optie" data-emoji="🦖">🦖</div>
+      <div class="emoji-optie" data-emoji="🚀">🚀</div>
+    </div>
+  </div>
+
+  <div class="foutmelding" id="foutmelding"></div>
+
+  <button id="verderKnop" disabled>Verder ➡️</button>
+</div>
+
+<!-- ===================== BEGROETING SCHERM ===================== -->
+<div class="kaart verborgen" id="begroetingScherm">
+  <div style="font-size: 4em; margin-bottom: 10px;" id="begroetingEmoji"></div>
+  <h2 style="color: #ff6b6b; margin-bottom: 10px;">Welkom, <span id="begroetingNaam"></span>! 👋</h2>
+  <p class="subtitel">Klaar om je typvingers los te maken?</p>
+  <button id="verderNaarHoofdpaginaKnop">Verder ➡️</button>
+</div>
+
+<!-- ===================== HOOFDPAGINA (APP MET MENUBALK) ===================== -->
+<div class="app-schil verborgen" id="hoofdpaginaScherm">
+  <div class="app-inhoud">
+
+    <!-- ---------- TAB: HOME (LEVEL-PAD) ---------- -->
+    <div class="tab-inhoud actief" id="tabHome">
+      <div class="levelpad-header">
+        <div>
+          <div class="level-titel">Level 1</div>
+          <p class="subtitel" style="margin:0;">Hoi <span id="homeNaam"></span> <span id="homeAvatarKlein"></span>, kies je level!</p>
+        </div>
+      </div>
+      <div class="levelpad" id="levelPad"></div>
+    </div>
+
+    <!-- ---------- TAB: SPELLETJES ---------- -->
+    <div class="tab-inhoud" id="tabSpelletjes">
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Tijd</div>
+          <div class="stat-waarde" id="tijd">30</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Score</div>
+          <div class="stat-waarde" id="score">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">WPM</div>
+          <div class="stat-waarde" id="wpm">0</div>
+        </div>
+      </div>
+
+      <div class="woord-scherm" id="woordScherm">Klik op start!</div>
+
+      <input type="text" id="invoer" placeholder="Typ hier..." disabled autocomplete="off">
+      <br>
+      <button id="startKnop">▶️ Start</button>
+
+      <div class="melding" id="melding"></div>
+    </div>
+
+    <!-- ---------- TAB: EN ANDERE DINGEN (MEER) ---------- -->
+    <div class="tab-inhoud" id="tabMeer">
+      <div class="profiel-kaart">
+        <span class="icoon" id="meerAvatar"></span>
+        <div>
+          <div style="font-weight:bold; font-size:1.2em; color:#333;" id="meerNaam"></div>
+          <div style="color:#888;" id="meerLeeftijd"></div>
+        </div>
+      </div>
+
+      <div class="info-lijst">
+        <div>🏆 Beste score: <b id="meerBesteScore">0</b> woorden</div>
+        <div>⚡ Beste snelheid: <b id="meerBesteWpm">0</b> WPM</div>
+        <div>🔒 Wachtwoord: <b>●●●●●</b></div>
+      </div>
+
+      <div class="tip-kaart">
+        💡 <b>Typtip:</b> <span id="typtip"></span>
+      </div>
+    </div>
+
+    <!-- ---------- TAB: LES UITLEG ---------- -->
+    <div class="tab-inhoud" id="tabLesUitleg">
+      <h2 class="les-titel" id="lesUitlegTitel">Leer de letter</h2>
+
+      <div class="toetsenbord" id="lesToetsenbord"></div>
+
+      <p class="vinger-tip"><span class="icoon">🖐️</span> <span id="lesVingerTekst"></span></p>
+
+      <button id="ikBegrijpHetKnop">Ik begrijp het ✅</button>
+    </div>
+
+    <!-- ---------- TAB: LES OEFENEN ---------- -->
+    <div class="tab-inhoud" id="tabLesOefenen">
+      <h2 class="les-titel">Typ de letter <span id="oefenLetterTitel"></span> - 10 keer!</h2>
+
+      <div class="oefen-balk" id="oefenBalk"></div>
+
+      <input type="text" id="oefenInvoer" placeholder="Typ hier..." autocomplete="off" maxlength="1">
+
+      <div class="melding" id="oefenMelding"></div>
+
+      <button id="oefenTerugKnop" class="verborgen">Terug naar het level-pad 🏠</button>
+    </div>
+
+  </div>
+
+  <!-- ---------- ONDERSTE MENUBALK ---------- -->
+  <div class="menubalk">
+    <button class="menu-knop actief" data-tab="tabHome">
+      <span class="menu-icoon">🏠</span>
+      Home
+    </button>
+    <button class="menu-knop" data-tab="tabSpelletjes">
+      <span class="menu-icoon">🎮</span>
+      Spelletjes
+    </button>
+    <button class="menu-knop" data-tab="tabMeer">
+      <span class="menu-icoon">⭐</span>
+      Profiel
+    </button>
+  </div>
+</div>
+
+<script>
+  /* ---------------- WOORDENLIJSTEN OP LEEFTIJD ---------------- */
+  const woordenJong = [ // 4-7 jaar: korte simpele woordjes
+    "kat", "hond", "bal", "zon", "maan", "boom", "vis", "huis",
+    "bus", "auto", "melk", "bed", "boot", "appel", "peer", "ei"
+  ];
+
+  const woordenMidden = [ // 8-11 jaar
+    "school", "fiets", "banaan", "voetbal", "computer", "regenboog",
+    "olifant", "kasteel", "draak", "prinses", "ridder", "vliegtuig",
+    "trein", "raket", "ijsje", "chocolade", "vlinder", "spin", "vogel",
+    "boom", "berg", "rivier", "strand", "sneeuw", "wolk", "vriend",
+    "speelgoed", "boek", "potlood", "tablet", "muziek", "dans", "lachen"
+  ];
+
+  const woordenOud = [ // 12+ jaar: langer / moeilijker
+    "avontuur", "wetenschap", "geheugen", "verrassing", "toetsenbord",
+    "ontdekking", "belangrijk", "wereldwijd", "vriendschap", "spannend",
+    "geweldig", "programmeren", "technologie", "creativiteit", "vertrouwen",
+    "nieuwsgierig", "verantwoordelijk", "onafhankelijk", "kampioenschap"
+  ];
+
+  const typtips = [
+    "Zet je vingers op de thuisrij: asdf en jklö.",
+    "Kijk zoveel mogelijk naar het scherm, niet naar je toetsenbord.",
+    "Gebruik altijd dezelfde vinger voor dezelfde toets.",
+    "Rustig en goed typen is beter dan snel en veel fouten maken.",
+    "Oefen elke dag een klein beetje, dan word je steeds sneller!"
+  ];
+
+  let woordenLijst = woordenMidden;
+
+  /* ---------------- OPGESLAGEN SPELERS (voor deze sessie) ---------------- */
+  const opgeslagenSpelers = {}; // naam (kleine letters) -> { wachtwoord, leeftijd, emoji, besteScore, besteWpm }
+
+  const inlogScherm = document.getElementById("inlogScherm");
+  const inlogNaamInvoer = document.getElementById("inlogNaamInvoer");
+  const inlogWachtwoordInvoer = document.getElementById("inlogWachtwoordInvoer");
+  const inlogFoutmelding = document.getElementById("inlogFoutmelding");
+  const inlogKnop = document.getElementById("inlogKnop");
+  const ikBenNieuwKnop = document.getElementById("ikBenNieuwKnop");
+
+  /* ---------------- SPELER GEGEVENS ---------------- */
+  let spelerNaam = "";
+  let spelerLeeftijd = 0;
+  let spelerEmoji = "";
+  let spelerWachtwoord = "";
+  let besteScore = 0;
+  let besteWpm = 0;
+
+  const naamInvoer = document.getElementById("naamInvoer");
+  const leeftijdInvoer = document.getElementById("leeftijdInvoer");
+  const wachtwoordInvoer = document.getElementById("wachtwoordInvoer");
+  const emojiGrid = document.getElementById("emojiGrid");
+  const verderKnop = document.getElementById("verderKnop");
+  const foutmelding = document.getElementById("foutmelding");
+
+  const welkomScherm = document.getElementById("welkomScherm");
+  const begroetingScherm = document.getElementById("begroetingScherm");
+  const hoofdpaginaScherm = document.getElementById("hoofdpaginaScherm");
+
+  ikBenNieuwKnop.addEventListener("click", () => {
+    inlogFoutmelding.textContent = "";
+    inlogScherm.classList.add("verborgen");
+    welkomScherm.classList.remove("verborgen");
+  });
+
+  inlogKnop.addEventListener("click", () => {
+    const naamGetypt = inlogNaamInvoer.value.trim();
+    const naamSleutel = naamGetypt.toLowerCase();
+    const wachtwoordGetypt = inlogWachtwoordInvoer.value;
+
+    if (naamGetypt === "" || wachtwoordGetypt === "") {
+      inlogFoutmelding.textContent = "Vul je naam en wachtwoord in 🙂";
+      return;
+    }
+
+    const opgeslagen = opgeslagenSpelers[naamSleutel];
+
+    if (!opgeslagen) {
+      inlogFoutmelding.textContent = "Deze naam kennen we nog niet. Ben je nieuw? Klik dan op 'Ik ben nieuw' ✨";
+      return;
+    }
+
+    if (opgeslagen.wachtwoord !== wachtwoordGetypt) {
+      inlogFoutmelding.textContent = "Dat wachtwoord klopt niet, probeer het nog eens 🔒";
+      return;
+    }
+
+    // Inloggen gelukt: spelergegevens laden
+    spelerNaam = naamGetypt;
+    spelerLeeftijd = opgeslagen.leeftijd;
+    spelerEmoji = opgeslagen.emoji;
+    spelerWachtwoord = opgeslagen.wachtwoord;
+    besteScore = opgeslagen.besteScore;
+    besteWpm = opgeslagen.besteWpm;
+
+    if (spelerLeeftijd <= 7) {
+      woordenLijst = woordenJong;
+    } else if (spelerLeeftijd <= 11) {
+      woordenLijst = woordenMidden;
+    } else {
+      woordenLijst = woordenOud;
+    }
+
+    inlogScherm.classList.add("verborgen");
+    hoofdpaginaScherm.classList.remove("verborgen");
+    vulHoofdpaginaIn();
+  });
+
+  emojiGrid.addEventListener("click", (e) => {
+    const optie = e.target.closest(".emoji-optie");
+    if (!optie) return;
+    document.querySelectorAll(".emoji-optie").forEach(el => el.classList.remove("gekozen"));
+    optie.classList.add("gekozen");
+    spelerEmoji = optie.dataset.emoji;
+    checkWelkomVeldig();
+  });
+
+  naamInvoer.addEventListener("input", checkWelkomVeldig);
+  leeftijdInvoer.addEventListener("input", checkWelkomVeldig);
+  wachtwoordInvoer.addEventListener("input", checkWelkomVeldig);
+
+  function checkWelkomVeldig() {
+    const naamOk = naamInvoer.value.trim().length > 0;
+    const leeftijdOk = leeftijdInvoer.value !== "" && Number(leeftijdInvoer.value) >= 4 && Number(leeftijdInvoer.value) <= 17;
+    const wachtwoordOk = wachtwoordInvoer.value.length >= 5;
+    const emojiOk = spelerEmoji !== "";
+
+    if (naamOk && leeftijdInvoer.value !== "" && !leeftijdOk) {
+      foutmelding.textContent = "Vul een leeftijd in tussen 4 en 17 jaar 🙂";
+    } else if (wachtwoordInvoer.value !== "" && !wachtwoordOk) {
+      foutmelding.textContent = "Je wachtwoord moet minstens 5 tekens hebben 🔒";
+    } else {
+      foutmelding.textContent = "";
+    }
+
+    verderKnop.disabled = !(naamOk && leeftijdOk && wachtwoordOk && emojiOk);
+  }
+
+  verderKnop.addEventListener("click", () => {
+    spelerNaam = naamInvoer.value.trim();
+    spelerLeeftijd = Number(leeftijdInvoer.value);
+    spelerWachtwoord = wachtwoordInvoer.value;
+
+    // Kies moeilijkheid op basis van leeftijd
+    if (spelerLeeftijd <= 7) {
+      woordenLijst = woordenJong;
+    } else if (spelerLeeftijd <= 11) {
+      woordenLijst = woordenMidden;
+    } else {
+      woordenLijst = woordenOud;
+    }
+
+    document.getElementById("begroetingEmoji").textContent = spelerEmoji;
+    document.getElementById("begroetingNaam").textContent = spelerNaam;
+
+    // Nieuwe speler opslaan zodat die later kan inloggen
+    besteScore = 0;
+    besteWpm = 0;
+    opgeslagenSpelers[spelerNaam.toLowerCase()] = {
+      wachtwoord: spelerWachtwoord,
+      leeftijd: spelerLeeftijd,
+      emoji: spelerEmoji,
+      besteScore: 0,
+      besteWpm: 0
+    };
+
+    welkomScherm.classList.add("verborgen");
+    begroetingScherm.classList.remove("verborgen");
+  });
+
+  function vulHoofdpaginaIn() {
+    document.getElementById("homeNaam").textContent = spelerNaam;
+    document.getElementById("homeAvatarKlein").textContent = spelerEmoji;
+    document.getElementById("meerAvatar").textContent = spelerEmoji;
+    document.getElementById("meerNaam").textContent = spelerNaam;
+    document.getElementById("meerLeeftijd").textContent = spelerLeeftijd + " jaar";
+    document.getElementById("meerBesteScore").textContent = besteScore;
+    document.getElementById("meerBesteWpm").textContent = besteWpm;
+    document.getElementById("typtip").textContent = typtips[Math.floor(Math.random() * typtips.length)];
+    tekenLevelPad();
+  }
+
+  function tekenLevelPad() {
+    const pad = document.getElementById("levelPad");
+    pad.innerHTML = "";
+
+    const breedte = pad.clientWidth || 600;
+    const aantalLevels = 10;
+    const verticaleAfstand = 90;
+    const bovenRand = 50;
+    const onderRand = 70;
+    const hoogte = bovenRand + (aantalLevels - 1) * verticaleAfstand + onderRand;
+    const amplitude = Math.min(breedte / 2 - 55, 130);
+
+    pad.style.height = hoogte + "px";
+
+    // Toast-melding voor levels die nog niet klaar zijn
+    const toast = document.createElement("div");
+    toast.className = "melding-toast";
+    toast.id = "levelToast";
+    toast.textContent = "Speel eerst Level 1! 😊";
+    pad.appendChild(toast);
+
+    for (let i = 0; i < aantalLevels; i++) {
+      const t = i / (aantalLevels - 1);
+      const y = hoogte - onderRand - i * verticaleAfstand;
+      const x = breedte / 2 + Math.sin(t * Math.PI * 2) * amplitude;
+
+      if (i === 0) {
+        const start = document.createElement("div");
+        start.className = "start-badge";
+        start.textContent = "START";
+        start.style.left = x + "px";
+        start.style.top = (y + 45) + "px";
+        pad.appendChild(start);
+      }
+
+      const levelKnop = document.createElement("button");
+      levelKnop.className = "level-knop-pad";
+      levelKnop.textContent = (i + 1);
+      levelKnop.style.left = x + "px";
+      levelKnop.style.top = y + "px";
+
+      levelKnop.addEventListener("click", () => {
+        if (i === 0) {
+          toonLesUitleg();
+        } else {
+          toast.classList.add("zichtbaar");
+          setTimeout(() => toast.classList.remove("zichtbaar"), 1600);
+        }
+      });
+
+      pad.appendChild(levelKnop);
+    }
+  }
+
+  /* ---------------- LES: LETTER LEREN + OEFENEN ---------------- */
+  const lesLetter = "A";
+  const lesVinger = "linker pink";
+
+  const toetsenbordRijen = [
+    "QWERTYUIOP".split(""),
+    "ASDFGHJKL".split(""),
+    "ZXCVBNM".split("")
+  ];
+
+  function bouwToetsenbord(letter) {
+    const container = document.getElementById("lesToetsenbord");
+    container.innerHTML = "";
+    const rijVerschuiving = [46, 23, 0]; // rij 1 het verst naar rechts, rij 3 recht (omgekeerde trapsgewijs)
+    toetsenbordRijen.forEach((rij, rijIndex) => {
+      const rijDiv = document.createElement("div");
+      rijDiv.className = "toetsenbord-rij";
+      rijDiv.style.marginLeft = rijVerschuiving[rijIndex] + "px";
+      rij.forEach(toetsLetter => {
+        const toetsDiv = document.createElement("div");
+        toetsDiv.className = "toets" + (toetsLetter === letter ? " toets-actief" : "");
+        toetsDiv.textContent = toetsLetter;
+        rijDiv.appendChild(toetsDiv);
+      });
+      container.appendChild(rijDiv);
+    });
+  }
+
+  function toonLesUitleg() {
+    document.getElementById("lesUitlegTitel").textContent = "Leer de letter " + lesLetter;
+    document.getElementById("lesVingerTekst").textContent =
+      `Gebruik je ${lesVinger} om op de letter ${lesLetter} te drukken.`;
+    bouwToetsenbord(lesLetter);
+    gaNaarTab("tabLesUitleg");
+  }
+
+  let oefenIndex = 0;
+  const oefenDoel = 10;
+
+  function bouwOefenBalk() {
+    const balk = document.getElementById("oefenBalk");
+    balk.innerHTML = "";
+    for (let i = 0; i < oefenDoel; i++) {
+      const letterDiv = document.createElement("div");
+      letterDiv.className = "oefen-letter rood";
+      letterDiv.textContent = lesLetter;
+      balk.appendChild(letterDiv);
+    }
+  }
+
+  function toonLesOefenen() {
+    document.getElementById("oefenLetterTitel").textContent = lesLetter;
+    oefenIndex = 0;
+    bouwOefenBalk();
+    document.getElementById("oefenMelding").textContent = "";
+    document.getElementById("oefenTerugKnop").classList.add("verborgen");
+    const oefenInvoer = document.getElementById("oefenInvoer");
+    oefenInvoer.value = "";
+    oefenInvoer.disabled = false;
+    gaNaarTab("tabLesOefenen");
+    oefenInvoer.focus();
+  }
+
+  document.getElementById("ikBegrijpHetKnop").addEventListener("click", toonLesOefenen);
+
+  document.getElementById("oefenInvoer").addEventListener("input", (e) => {
+    const getypt = e.target.value.toUpperCase();
+    e.target.value = "";
+    if (oefenIndex >= oefenDoel) return;
+
+    if (getypt === lesLetter) {
+      const letters = document.querySelectorAll("#oefenBalk .oefen-letter");
+      letters[oefenIndex].classList.remove("rood");
+      letters[oefenIndex].classList.add("groen");
+      oefenIndex++;
+
+      if (oefenIndex >= oefenDoel) {
+        document.getElementById("oefenMelding").textContent = `Goed gedaan, ${spelerNaam}! 🎉 Je kent de letter ${lesLetter} nu!`;
+        document.getElementById("oefenMelding").className = "melding klaar";
+        document.getElementById("oefenTerugKnop").classList.remove("verborgen");
+        document.getElementById("oefenInvoer").disabled = true;
+      }
+    }
+  });
+
+  document.getElementById("oefenTerugKnop").addEventListener("click", () => {
+    gaNaarTab("tabHome");
+  });
+
+  document.getElementById("verderNaarHoofdpaginaKnop").addEventListener("click", () => {
+    begroetingScherm.classList.add("verborgen");
+    hoofdpaginaScherm.classList.remove("verborgen");
+    vulHoofdpaginaIn();
+  });
+
+  /* ---------------- ONDERSTE MENUBALK: TABS WISSELEN ---------------- */
+  const menuKnoppen = document.querySelectorAll(".menu-knop");
+  const tabInhouden = document.querySelectorAll(".tab-inhoud");
+
+  function gaNaarTab(tabId) {
+    tabInhouden.forEach(tab => tab.classList.toggle("actief", tab.id === tabId));
+    const actieveMenuTab = tabId.startsWith("tabLes") ? "tabHome" : tabId;
+    menuKnoppen.forEach(knop => knop.classList.toggle("actief", knop.dataset.tab === actieveMenuTab));
+  }
+
+  menuKnoppen.forEach(knop => {
+    knop.addEventListener("click", () => gaNaarTab(knop.dataset.tab));
+  });
+
+  document.querySelectorAll(".snelkoppeling").forEach(kaart => {
+    kaart.addEventListener("click", () => gaNaarTab(kaart.dataset.gaNaar));
+  });
+
+  /* ---------------- TYPSPEL ---------------- */
+  let huidigWoord = "";
+  let score = 0;
+  let tijdOver = 30;
+  let timerInterval = null;
+  let spelActief = false;
+  let startTijd = null;
+  let getypteLetters = 0;
+
+  const woordScherm = document.getElementById("woordScherm");
+  const invoer = document.getElementById("invoer");
+  const scoreEl = document.getElementById("score");
+  const tijdEl = document.getElementById("tijd");
+  const wpmEl = document.getElementById("wpm");
+  const meldingEl = document.getElementById("melding");
+  const startKnop = document.getElementById("startKnop");
+
+  function nieuwWoord() {
+    huidigWoord = woordenLijst[Math.floor(Math.random() * woordenLijst.length)];
+    toonWoord("");
+  }
+
+  function toonWoord(getypt) {
+    let html = "";
+    for (let i = 0; i < huidigWoord.length; i++) {
+      if (i < getypt.length) {
+        html += getypt[i] === huidigWoord[i]
+          ? `<span class="letter-goed">${huidigWoord[i]}</span>`
+          : `<span class="letter-fout">${huidigWoord[i]}</span>`;
+      } else {
+        html += huidigWoord[i];
+      }
+    }
+    woordScherm.innerHTML = html;
+  }
+
+  function startSpel() {
+    score = 0;
+    tijdOver = 30;
+    getypteLetters = 0;
+    spelActief = true;
+    startTijd = Date.now();
+    scoreEl.textContent = score;
+    tijdEl.textContent = tijdOver;
+    wpmEl.textContent = 0;
+    meldingEl.textContent = "";
+    meldingEl.className = "melding";
+    invoer.disabled = false;
+    invoer.value = "";
+    invoer.focus();
+    startKnop.textContent = "🔄 Opnieuw";
+    nieuwWoord();
+
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      tijdOver--;
+      tijdEl.textContent = tijdOver;
+      if (tijdOver <= 0) eindeSpel();
+    }, 1000);
+  }
+
+  function eindeSpel() {
+    spelActief = false;
+    clearInterval(timerInterval);
+    invoer.disabled = true;
+    woordScherm.textContent = "🎉 Klaar!";
+    meldingEl.textContent = `Goed gedaan, ${spelerNaam}! Je hebt ${score} woorden getypt!`;
+    meldingEl.className = "melding klaar";
+
+    const huidigeWpm = Number(wpmEl.textContent);
+    if (score > besteScore) besteScore = score;
+    if (huidigeWpm > besteWpm) besteWpm = huidigeWpm;
+    document.getElementById("meerBesteScore").textContent = besteScore;
+    document.getElementById("meerBesteWpm").textContent = besteWpm;
+
+    const opgeslagen = opgeslagenSpelers[spelerNaam.toLowerCase()];
+    if (opgeslagen) {
+      opgeslagen.besteScore = besteScore;
+      opgeslagen.besteWpm = besteWpm;
+    }
+  }
+
+  invoer.addEventListener("input", () => {
+    if (!spelActief) return;
+    const getypt = invoer.value;
+    toonWoord(getypt);
+
+    if (getypt === huidigWoord) {
+      score++;
+      getypteLetters += huidigWoord.length;
+      scoreEl.textContent = score;
+      invoer.value = "";
+
+      const secondenBezig = (Date.now() - startTijd) / 1000 / 60;
+      const wpm = secondenBezig > 0 ? Math.round((getypteLetters / 5) / secondenBezig) : 0;
+      wpmEl.textContent = wpm;
+
+      meldingEl.textContent = "Goed zo! ✅";
+      meldingEl.className = "melding goed";
+
+      nieuwWoord();
+    }
+  });
+
+  startKnop.addEventListener("click", startSpel);
+</script>
+
+</body>
+</html>

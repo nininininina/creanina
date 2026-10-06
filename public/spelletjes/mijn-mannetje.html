@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mijn Mannetje - Grote Stad Spel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Comic Sans MS', cursive; overflow: hidden; height: 100vh; }
+        #gameContainer { position: relative; width: 100%; height: 100vh; }
+        .scene { position: absolute; width: 100%; height: 100%; display: none; }
+        .scene.active { display: block; }
+        #outsideScene { background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 70%, #90EE90 100%); }
+        #world { position: relative; width: 4500px; height: calc(100vh - 120px); transition: transform 0.3s; }
+        #worldContainer { position: relative; width: 100%; height: calc(100vh - 120px); overflow: hidden; }
+        #ground { position: absolute; bottom: 0; width: 100%; height: 60px; background: linear-gradient(to bottom, #90EE90, #228B22); border-top: 3px solid #006400; }
+        .road { position: absolute; bottom: 60px; width: 100%; height: 40px; background: repeating-linear-gradient(90deg, #555 0px, #555 50px, #FFD700 50px, #FFD700 55px, #555 55px, #555 105px); border-top: 3px solid #333; border-bottom: 3px solid #333; }
+        #player { position: absolute; bottom: 100px; left: 100px; width: 60px; height: 80px; transition: left 0.15s; z-index: 10; }
+        .friend { position: absolute; bottom: 100px; width: 60px; height: 80px; z-index: 9; }
+        .building { position: absolute; bottom: 100px; cursor: pointer; transition: transform 0.2s; }
+        .building:hover { transform: scale(1.05); }
+        #house { left: 50px; width: 140px; height: 120px; background: linear-gradient(to bottom, #D2691E, #8B4513); border: 4px solid #654321; border-radius: 10px 10px 0 0; }
+        .roof { position: absolute; top: -50px; left: -10px; width: 0; height: 0; border-left: 80px solid transparent; border-right: 80px solid transparent; border-bottom: 50px solid #8B0000; }
+        #clothesShop { left: 400px; width: 120px; height: 140px; background: linear-gradient(to bottom, #FF69B4, #FF1493); border: 4px solid #C71585; border-radius: 10px 10px 0 0; }
+        #toyShop { left: 670px; width: 120px; height: 140px; background: linear-gradient(to bottom, #FFD700, #FFA500); border: 4px solid #FF8C00; border-radius: 10px 10px 0 0; }
+        #restaurant { left: 940px; width: 150px; height: 140px; background: linear-gradient(to bottom, #FF6347, #DC143C); border: 4px solid #8B0000; border-radius: 10px 10px 0 0; }
+        #school { left: 1240px; width: 180px; height: 160px; background: linear-gradient(to bottom, #FFE4B5, #DEB887); border: 4px solid #8B4513; border-radius: 10px 10px 0 0; }
+        #park { left: 1570px; width: 200px; height: 140px; background: linear-gradient(to bottom, #90EE90, #228B22); border: 4px solid #006400; border-radius: 10px 10px 0 0; }
+        #vehicleShop { left: 1920px; width: 140px; height: 140px; background: linear-gradient(to bottom, #4169E1, #0000CD); border: 4px solid #00008B; border-radius: 10px 10px 0 0; }
+        #work { left: 2210px; width: 120px; height: 140px; background: linear-gradient(to bottom, #9370DB, #8A2BE2); border: 4px solid #4B0082; border-radius: 10px 10px 0 0; }
+        .building-label { position: absolute; top: -45px; left: 50%; transform: translateX(-50%); font-weight: bold; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); font-size: 16px; background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 10px; border: 3px solid #FFD700; white-space: nowrap; }
+        .door { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 35px; height: 50px; background: #8B4513; border: 2px solid #654321; border-radius: 5px 5px 0 0; }
+        .window { position: absolute; width: 25px; height: 25px; background: #87CEEF; border: 2px solid #4682B4; border-radius: 3px; }
+        .building .window:nth-child(2) { top: 20px; left: 15px; }
+        .building .window:nth-child(3) { top: 20px; right: 15px; }
+        .interior { width: 100%; height: calc(100vh - 120px); position: relative; overflow-y: auto; }
+        .interior-floor { position: absolute; bottom: 0; width: 100%; height: 80px; background: #8B4513; }
+        .interior-wall { position: absolute; top: 0; width: 100%; height: calc(100% - 80px); }
+        .exit-door { position: absolute; bottom: 80px; right: 50px; width: 80px; height: 120px; background: #8B4513; border: 4px solid #654321; border-radius: 10px; cursor: pointer; transition: transform 0.2s; z-index: 100; box-shadow: inset 0 0 10px rgba(0,0,0,0.3); }
+        .exit-door:hover { transform: scale(1.1); }
+        .exit-door::before { content: ''; position: absolute; width: 12px; height: 12px; background: #FFD700; border-radius: 50%; left: 20px; top: 50%; transform: translateY(-50%); border: 2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .exit-door::after { content: ''; position: absolute; width: 50px; height: 85px; border: 3px solid #654321; border-radius: 5px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .shop-item { position: absolute; cursor: pointer; transition: transform 0.2s; text-align: center; }
+        .shop-item:hover { transform: scale(1.2); }
+        .item-display { width: 80px; height: 80px; margin: 0 auto 10px; }
+        .item-info { background: rgba(255,255,255,0.9); padding: 5px 10px; border-radius: 8px; font-size: 14px; font-weight: bold; border: 2px solid #333; }
+        .work-desk { position: absolute; width: 200px; height: 100px; background: #8B4513; border: 4px solid #654321; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 60px; transition: transform 0.2s; }
+        .work-desk:hover { transform: translate(-50%, -50%) scale(1.1); }
+        #ui { position: fixed; bottom: 0; width: 100%; height: 120px; background: rgba(255, 255, 255, 0.95); border-top: 4px solid #FFD700; padding: 15px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -4px 10px rgba(0,0,0,0.2); z-index: 50; }
+        .ui-item { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .ui-label { font-size: 14px; font-weight: bold; color: #333; }
+        .ui-value { font-size: 18px; font-weight: bold; color: #FF6347; background: #FFF59D; padding: 6px 12px; border-radius: 20px; border: 3px solid #FFD700; min-width: 70px; text-align: center; }
+        button { padding: 8px 12px; font-size: 13px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; background: linear-gradient(to bottom, #4CAF50, #45a049); color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.2s; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 8px rgba(0,0,0,0.3); }
+        #message { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(76, 175, 80, 0.95); color: white; padding: 15px 30px; border-radius: 10px; font-size: 18px; font-weight: bold; display: none; z-index: 200; box-shadow: 0 4px 10px rgba(0,0,0,0.3); max-width: 80%; text-align: center; }
+        .inventory-display { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.95); padding: 20px; border-radius: 15px; border: 3px solid #FFD700; max-width: 600px; max-height: calc(100vh - 180px); overflow-y: auto; }
+        .inventory-title { font-size: 24px; font-weight: bold; margin-bottom: 15px; color: #333; }
+        .inventory-category { margin: 15px 0; }
+        .inventory-category-title { font-size: 18px; font-weight: bold; color: #333; background: #e3f2fd; padding: 8px; border-radius: 8px; margin-bottom: 8px; }
+        .inventory-item { display: inline-block; margin: 5px; padding: 8px 12px; background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px; font-size: 14px; }
+        .work-area { position: relative; width: 100%; height: 100%; min-height: 400px; }
+        .work-target { position: absolute; width: 70px; height: 70px; cursor: pointer; transition: transform 0.1s; }
+        .work-target:hover { transform: scale(1.1); }
+        .work-timer-bar { position: absolute; top: 140px; left: 50%; transform: translateX(-50%); width: 300px; height: 25px; background: #DDD; border: 3px solid #333; border-radius: 15px; overflow: hidden; }
+        .work-timer-fill { height: 100%; background: linear-gradient(to right, #4CAF50, #8BC34A); transition: width 0.1s linear; }
+        .work-score { position: absolute; top: 90px; left: 50%; transform: translateX(-50%); font-size: 28px; font-weight: bold; color: #333; background: rgba(255,255,255,0.9); padding: 10px 30px; border-radius: 15px; border: 3px solid #FFD700; }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="outsideScene" class="scene active">
+            <div id="worldContainer">
+                <div id="world">
+                    <div id="player">
+                        <svg width="60" height="80" viewBox="0 0 60 80">
+                            <circle cx="30" cy="15" r="12" fill="#FFD4A3" stroke="#000" stroke-width="2"/>
+                            <circle cx="25" cy="14" r="2" fill="#000"/>
+                            <circle cx="35" cy="14" r="2" fill="#000"/>
+                            <path d="M 23 18 Q 30 21 37 18" stroke="#000" stroke-width="2" fill="none"/>
+                            <rect id="shirt" x="18" y="27" width="24" height="30" fill="#FF0000" stroke="#000" stroke-width="2" rx="3"/>
+                            <rect class="pants" x="18" y="57" width="10" height="18" fill="#0000FF" stroke="#000" stroke-width="2"/>
+                            <rect class="pants" x="32" y="57" width="10" height="18" fill="#0000FF" stroke="#000" stroke-width="2"/>
+                            <line x1="18" y1="32" x2="8" y2="45" stroke="#FFD4A3" stroke-width="4" stroke-linecap="round"/>
+                            <line x1="42" y1="32" x2="52" y2="45" stroke="#FFD4A3" stroke-width="4" stroke-linecap="round"/>
+                            <ellipse class="shoes" cx="23" cy="77" rx="6" ry="3" fill="#000"/>
+                            <ellipse class="shoes" cx="37" cy="77" rx="6" ry="3" fill="#000"/>
+                            <g id="hat-holder"></g>
+                            <g id="glasses-holder"></g>
+                        </svg>
+                    </div>
+                    
+                    <div id="vehicle-display" class="vehicle-icon" style="display: none;"></div>
+                    
+                    <!-- VRIENDEN -->
+                    <div class="friend" style="left: 500px; cursor: pointer;" onclick="talkToFriend('Emma', 'Hoi! Hoe gaat het met jou? Wat heb je vandaag gedaan?')">
+                        <svg width="60" height="80" viewBox="0 0 60 80">
+                            <circle cx="30" cy="15" r="12" fill="#FFD4A3" stroke="#000" stroke-width="2"/>
+                            <circle cx="25" cy="14" r="2" fill="#000"/>
+                            <circle cx="35" cy="14" r="2" fill="#000"/>
+                            <path d="M 23 18 Q 30 21 37 18" stroke="#000" stroke-width="2" fill="none"/>
+                            <rect x="18" y="27" width="24" height="30" fill="#00FF00" stroke="#000" stroke-width="2" rx="3"/>
+                            <rect x="18" y="57" width="10" height="18" fill="#8B4513" stroke="#000" stroke-width="2"/>
+                            <rect x="32" y="57" width="10" height="18" fill="#8B4513" stroke="#000" stroke-width="2"/>
+                            <line x1="18" y1="32" x2="8" y2="45" stroke="#FFD4A3" stroke-width="4" stroke-linecap="round"/>
+                            <line x1="42" y1="32" x2="52" y2="45" stroke="#FFD4A3" stroke-width="4" stroke-linecap="round"/>
+                            <ellipse cx="23" cy="77" rx="6" ry="3" fill="#000"/>
+                            <ellipse cx="37" cy="77" rx="6" ry="3" fill="#000"/>
+                        </svg>
+                        <div style="position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 3px 8px; border-radius: 5px; font-size: 12px; white-space: nowrap;">Emma</div>
+                    </div>
+                    
+                    <div class="friend" style="left: 1200px; cursor: pointer;" onclick="talkToFriend('Lucas', 'Hey! Zullen we samen naar het park gaan? Of heb je zin om te voetballen?')">
+                        <svg width="60" height="80" viewBox="0 0 60 80">
+                            <circle cx="30" cy="15" r="12" fill="#FFD4A3" stroke="#000" stroke-width="2"/>
+                            <circle cx="25" cy="14" r="2" fill="#000"/>
+                            <circle cx="35" cy="14" r="2" fill="#000"/>
+                            <path d="M 23 18 Q 30 21 37 18" stroke="#000" stroke-width="2" fill="none"/>
+                            <rect x="18" y="27" width="24" height="30" fill="#FF00FF" stroke="#000" stroke-width="2" rx="3"/>
+                            <rect x="18" y="57" width="10" height="18" fill="#000" stroke="#000" stroke-width="2"/>
+                            <rect x="32" y="57" width="10" height="18" fill="#000" stroke="#000" stroke-width="2"/>
+                            <line x1="18" y1="32" x2="8" y2="45" stroke="#FFD4A3" stroke-width="4" stroke-linecap="round"/>
+                            <line x1="42" y1="32" x2="52" y2="45" stroke="#FFD4A3" stroke-width="4" stroke-linecap="round"/>
+                            <ellipse cx="23" cy="77" rx="6" ry="3" fill="#FFF"/>
+                            <ellipse cx="37" cy="77" rx="6" ry="3" fill="#FFF"/>
+                        </svg>
+                        <div style="position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 3px 8px; border-radius: 5px; font-size: 12px; white-space: nowrap;">Lucas</div>
+                    </div>
+                    
+                    <div id="house" class="building" onclick="enterBuilding('house')">
+                        <div class="roof"></div>
+                        <div class="window"></div>
+                        <div class="window"></div>
+                        <div class="door"></div>
+                        <div class="building-label">JOUW HUIS</div>
+                    </div>
+                    
+                    <svg style="position: absolute; left: 200px; bottom: 60px;" width="120" height="140">
+                        <rect x="0" y="90" width="120" height="50" fill="#228B22" stroke="#006400" stroke-width="2"/>
+                        <rect x="15" y="50" width="15" height="40" fill="#8B4513" stroke="#654321" stroke-width="2"/>
+                        <circle cx="22" cy="35" r="25" fill="#228B22" stroke="#006400" stroke-width="2"/>
+                        <circle cx="50" cy="120" r="5" fill="#FF69B4" stroke="#C71585" stroke-width="1"/>
+                        <line x1="50" y1="120" x2="50" y2="135" stroke="#228B22" stroke-width="2"/>
+                        <circle cx="70" cy="118" r="5" fill="#FFD700" stroke="#FFA500" stroke-width="1"/>
+                        <line x1="70" y1="118" x2="70" y2="135" stroke="#228B22" stroke-width="2"/>
+                    </svg>
+                    
+                    <div id="clothesShop" class="building" onclick="enterBuilding('clothes')">
+                        <div class="window"></div>
+                        <div class="window"></div>
+                        <div class="door"></div>
+                        <div class="building-label">KLEREN</div>
+                    </div>
+                    
+                    <div id="toyShop" class="building" onclick="enterBuilding('toys')">
+                        <div class="window"></div>
+                        <div class="window"></div>
+                        <div class="door"></div>
+                        <div class="building-label">SPEELGOED</div>
+                    </div>
+                    
+                    <div id="restaurant" class="building" onclick="enterBuilding('restaurant')">
+                        <div class="window"></div>
+                        <div class="window"></div>
+                        <div class="door"></div>
+                        <div class="building-label">RESTAURANT</div>
+                    </div>
+                    
+                    <div id="school" class="building" onclick="enterBuilding('school')">
+                        <div class="window"></div>
+                        <div class="window"></div>
+                        <div class="window" style="left: 50%; transform: translateX(-50%);"></div>
+                        <div class="door"></div>
+                        <div class="building-label">SCHOOL</div>
+                    </div>
+                    
+                    <div id="park" class="building" onclick="enterBuilding('park')">
+                        <svg width="200" height="140" style="position: absolute; top: 0; left: 0;">
+                            <rect width="200" height="140" fill="#90EE90"/>
+                            <rect x="20" y="80" width="20" height="60" fill="#8B4513"/>
+                            <circle cx="30" cy="60" r="30" fill="#228B22"/>
+                            <circle cx="120" cy="90" r="8" fill="#FF69B4"/>
+                            <circle cx="150" cy="85" r="8" fill="#FFD700"/>
+                        </svg>
+                        <div class="building-label">PARK</div>
+                    </div>
+                    
+                    <div id="bookstore" class="building" onclick="enterBuilding('bookstore')" style="left: 1870px; width: 130px; height: 140px; background: linear-gradient(to bottom, #8B4513 0%, #654321 100%); border: 4px solid #3E2723; border-radius: 10px 10px 0 0;">
+                        <div class="window"></div>
+                        <div class="window"></div>
+                        <div class="door"></div>
+                        <div class="building-label">BOEKEN</div>
+                    </div>
+                    
+                    <div id="furnitureShop" class="building" onclick="enterBuilding('furniture')" style="left: 2100px; width: 140px; height: 140px; background: linear-gradient(to bottom, #DEB887 0%, #D2691E 100%); border: 4px solid #8B4513; border-radius: 10px 10px 0 0;">
+                        <div class="window"></div>
+                        <div class="window"></div>
+                        <div class="door"></div>
+                        <div class="building-label">MEUBELS</div>
+                    </div>
+                    
+                    <div id="pharmacy" class="building" onclick="enterBuilding('pharmacy')" style="left: 2340px; width: 130px; height: 140px; background: linear-gradient(to bottom, #FFFFFF 0%, #E8E8E8 100%); border: 4px solid #00AA00; border-radius: 10px 10px 0 0;">
+                        <div class="window"></div>
+                        <div class="window"></div>
+                        <div class="door"></div>
+                        <svg width="50" height="50" style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%);">
+                            <rect x="20" y="10" width="10" height="30" fill="#FF0000"/>
+                            <rect x="10" y="20" width="30" height="10" fill="#FF0000"/>
+                        </svg>
+                        <div class="building-label">APOTHEEK</div>
+                    </div>
+                    
+                    <div id="vehicleShop" class="building" onclick="enterBuilding('vehicles')">
+                        <div class="window"></div>
+                        <div class="window"></div>
+                        <div class="door"></div>
+                        <div class="building-label">VOERTUIGEN</div>
+                    </div>
+                    
+                    <div id="work" class="building" onclick="enterBuilding('work')">
+                        <div class="window"></div>
+                        <div class="window"></div>
+                        <div class="door"></div>
+                        <div class="building-label">WERK</div>
+                    </div>
+                    
+                    <div class="road"></div>
+                    <div id="ground"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="interiorScene" class="scene"></div>
+        
+        <div id="ui">
+            <div class="ui-item">
+                <div class="ui-label">Geld</div>
+                <div class="ui-value" id="money">€0</div>
+            </div>
+            <div class="ui-item">
+                <div class="ui-label">Beweeg</div>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="movePlayer('left')">←</button>
+                    <button onclick="movePlayer('right')">→</button>
+                </div>
+            </div>
+            <div class="ui-item">
+                <div class="ui-label">Voertuig</div>
+                <div class="ui-value" id="vehicleStatus">Te voet</div>
+            </div>
+            <div class="ui-item" id="locationDisplay">
+                <div class="ui-label">Locatie</div>
+                <div class="ui-value">BUITEN</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="message"></div>
+    
+    <script>
+        let money = 0;
+        let playerPosition = 100;
+        let worldOffset = 0;
+        let currentLocation = 'outside';
+        let currentVehicle = null;
+        let moveSpeed = 50;
+        
+        const drawings = {
+            shirt: (color) => `<svg viewBox="0 0 80 80" width="80" height="80"><path d="M 20 20 L 15 30 L 15 70 L 65 70 L 65 30 L 60 20 L 50 25 L 40 20 L 30 25 Z" fill="${color}" stroke="#000" stroke-width="2"/><circle cx="30" cy="45" r="3" fill="#FFF"/><circle cx="40" cy="45" r="3" fill="#FFF"/></svg>`,
+            pants: (color) => `<svg viewBox="0 0 80 80" width="80" height="80"><rect x="15" y="15" width="18" height="50" fill="${color}" stroke="#000" stroke-width="2" rx="3"/><rect x="47" y="15" width="18" height="50" fill="${color}" stroke="#000" stroke-width="2" rx="3"/><rect x="15" y="15" width="50" height="15" fill="${color}" stroke="#000" stroke-width="2"/></svg>`,
+            shoes: (color) => `<svg viewBox="0 0 80 80" width="80" height="80"><ellipse cx="25" cy="50" rx="20" ry="10" fill="${color}" stroke="#000" stroke-width="2"/><ellipse cx="55" cy="50" rx="20" ry="10" fill="${color}" stroke="#000" stroke-width="2"/></svg>`,
+            hat: (color) => `<svg viewBox="0 0 60 20" width="60" height="20"><ellipse cx="30" cy="15" rx="25" ry="5" fill="${color}" stroke="#000" stroke-width="2"/><rect x="15" y="5" width="30" height="10" fill="${color}" stroke="#000" stroke-width="2" rx="5"/></svg>`,
+            glasses: `<svg viewBox="0 0 50 20" width="50" height="20"><circle cx="12" cy="10" r="8" fill="none" stroke="#000" stroke-width="2"/><circle cx="38" cy="10" r="8" fill="none" stroke="#000" stroke-width="2"/><line x1="20" y1="10" x2="30" y2="10" stroke="#000" stroke-width="2"/></svg>`,
+            swimwear: (color) => `<svg viewBox="0 0 80 80" width="80" height="80"><path d="M 25 30 L 20 50 L 20 65 L 35 65 L 35 50 Z" fill="${color}" stroke="#000" stroke-width="2"/><path d="M 55 30 L 60 50 L 60 65 L 45 65 L 45 50 Z" fill="${color}" stroke="#000" stroke-width="2"/><rect x="25" y="30" width="30" height="8" fill="${color}" stroke="#000" stroke-width="2"/></svg>`,
+            teddybeer: `<svg viewBox="0 0 80 80" width="80" height="80"><circle cx="40" cy="45" r="18" fill="#8B4513" stroke="#000" stroke-width="2"/><circle cx="40" cy="35" r="14" fill="#D2691E" stroke="#000" stroke-width="2"/><circle cx="25" cy="25" r="8" fill="#8B4513" stroke="#000" stroke-width="2"/><circle cx="55" cy="25" r="8" fill="#8B4513" stroke="#000" stroke-width="2"/></svg>`,
+            pizza: `<svg viewBox="0 0 80 80" width="80" height="80"><circle cx="40" cy="40" r="28" fill="#FFA500" stroke="#000" stroke-width="2"/><circle cx="30" cy="30" r="4" fill="#FF0000"/><circle cx="50" cy="30" r="4" fill="#FF0000"/><circle cx="40" cy="45" r="4" fill="#FF0000"/></svg>`,
+            hamburger: `<svg viewBox="0 0 80 80" width="80" height="80"><ellipse cx="40" cy="25" rx="25" ry="8" fill="#D2691E" stroke="#000" stroke-width="2"/><rect x="15" y="30" width="50" height="8" fill="#228B22" stroke="#000" stroke-width="2"/><rect x="15" y="38" width="50" height="12" fill="#8B4513" stroke="#000" stroke-width="2"/><ellipse cx="40" cy="58" rx="25" ry="8" fill="#F4A460" stroke="#000" stroke-width="2"/></svg>`,
+            hond: `<svg viewBox="0 0 80 80" width="80" height="80"><ellipse cx="40" cy="45" rx="20" ry="15" fill="#8B4513" stroke="#000" stroke-width="2"/><circle cx="30" cy="30" r="10" fill="#8B4513" stroke="#000" stroke-width="2"/><ellipse cx="25" cy="22" rx="6" ry="10" fill="#8B4513" stroke="#000" stroke-width="2"/><circle cx="26" cy="28" r="2" fill="#000"/></svg>`,
+            kat: `<svg viewBox="0 0 80 80" width="80" height="80"><ellipse cx="40" cy="48" rx="18" ry="14" fill="#FFA500" stroke="#000" stroke-width="2"/><circle cx="40" cy="32" r="12" fill="#FFA500" stroke="#000" stroke-width="2"/><path d="M 30 20 L 28 10 L 32 18 Z" fill="#FFA500" stroke="#000" stroke-width="2"/><path d="M 50 20 L 52 10 L 48 18 Z" fill="#FFA500" stroke="#000" stroke-width="2"/></svg>`,
+            vis: `<svg viewBox="0 0 80 80" width="80" height="80"><ellipse cx="40" cy="40" rx="25" ry="15" fill="#FFA500" stroke="#000" stroke-width="2"/><path d="M 15 40 L 5 30 L 5 50 Z" fill="#FFA500" stroke="#000" stroke-width="2"/><circle cx="50" cy="35" r="3" fill="#000"/></svg>`,
+            fiets: `<svg viewBox="0 0 100 60" width="100" height="60"><circle cx="20" cy="45" r="15" fill="none" stroke="#000" stroke-width="3"/><circle cx="80" cy="45" r="15" fill="none" stroke="#000" stroke-width="3"/><line x1="40" y1="15" x2="40" y2="35" stroke="#000" stroke-width="3"/><line x1="40" y1="35" x2="20" y2="45" stroke="#000" stroke-width="3"/><line x1="40" y1="35" x2="80" y2="45" stroke="#000" stroke-width="3"/></svg>`,
+            auto: `<svg viewBox="0 0 120 60" width="120" height="60"><rect x="10" y="25" width="100" height="25" fill="#FF0000" stroke="#000" stroke-width="2" rx="5"/><rect x="20" y="15" width="80" height="15" fill="#FF0000" stroke="#000" stroke-width="2" rx="5"/><circle cx="30" cy="50" r="8" fill="#000"/><circle cx="90" cy="50" r="8" fill="#000"/><rect x="30" y="17" width="20" height="10" fill="#87CEEB" stroke="#000" stroke-width="1"/></svg>`,
+            book: `<svg viewBox="0 0 80 80" width="80" height="80"><rect x="20" y="15" width="40" height="50" fill="#8B4513" stroke="#000" stroke-width="2" rx="2"/><rect x="22" y="17" width="36" height="46" fill="#F4A460" stroke="#000" stroke-width="1"/><line x1="40" y1="17" x2="40" y2="63" stroke="#8B4513" stroke-width="2"/><rect x="25" y="25" width="10" height="2" fill="#000"/><rect x="25" y="30" width="15" height="2" fill="#000"/><rect x="25" y="35" width="12" height="2" fill="#000"/></svg>`,
+            medicine: `<svg viewBox="0 0 80 80" width="80" height="80"><rect x="25" y="20" width="30" height="40" fill="#FFFFFF" stroke="#000" stroke-width="2" rx="3"/><rect x="35" y="25" width="10" height="10" fill="#FF0000"/><rect x="30" y="30" width="20" height="5" fill="#FF0000"/><circle cx="35" cy="45" r="3" fill="#FFD700"/><circle cx="45" cy="45" r="3" fill="#FFD700"/><circle cx="35" cy="52" r="3" fill="#FFD700"/><circle cx="45" cy="52" r="3" fill="#FFD700"/></svg>`,
+            bank: `<svg viewBox="0 0 80 80" width="80" height="80"><rect x="10" y="35" width="60" height="30" fill="#8B4513" stroke="#000" stroke-width="2" rx="5"/><rect x="10" y="25" width="60" height="15" fill="#A0522D" stroke="#000" stroke-width="2" rx="5"/><rect x="5" y="65" width="70" height="5" fill="#654321" stroke="#000" stroke-width="2"/><circle cx="25" cy="50" r="3" fill="#FFD700"/><circle cx="55" cy="50" r="3" fill="#FFD700"/></svg>`,
+            bed: `<svg viewBox="0 0 80 80" width="80" height="80"><rect x="10" y="35" width="60" height="25" fill="#4169E1" stroke="#000" stroke-width="2" rx="3"/><rect x="10" y="50" width="60" height="8" fill="#8B4513" stroke="#000" stroke-width="2"/><rect x="5" y="58" width="70" height="5" fill="#654321" stroke="#000" stroke-width="2"/><rect x="55" y="20" width="10" height="20" fill="#FFF" stroke="#000" stroke-width="2"/><line x1="12" y1="58" x2="12" y2="63" stroke="#654321" stroke-width="4"/><line x1="68" y1="58" x2="68" y2="63" stroke="#654321" stroke-width="4"/></svg>`,
+            tafel: `<svg viewBox="0 0 80 80" width="80" height="80"><rect x="15" y="25" width="50" height="8" fill="#8B4513" stroke="#000" stroke-width="2" rx="2"/><rect x="18" y="33" width="6" height="35" fill="#654321" stroke="#000" stroke-width="2"/><rect x="56" y="33" width="6" height="35" fill="#654321" stroke="#000" stroke-width="2"/></svg>`,
+            tv: `<svg viewBox="0 0 80 80" width="80" height="80"><rect x="10" y="20" width="60" height="40" fill="#000" stroke="#333" stroke-width="3" rx="3"/><rect x="15" y="25" width="50" height="30" fill="#4169E1" stroke="#000" stroke-width="2"/><rect x="35" y="60" width="10" height="8" fill="#333" stroke="#000" stroke-width="2"/><rect x="25" y="68" width="30" height="3" fill="#333" stroke="#000" stroke-width="1"/></svg>`
+        };
+        
+        let inventory = {
+            clothes: {
+                shirts: [
+                    { name: 'Rood Shirt', color: '#FF0000', price: 0, owned: true, equipped: true },
+                    { name: 'Blauw Shirt', color: '#0000FF', price: 10, owned: false },
+                    { name: 'Groen Shirt', color: '#00FF00', price: 15, owned: false },
+                    { name: 'Geel Shirt', color: '#FFFF00', price: 20, owned: false }
+                ],
+                pants: [
+                    { name: 'Blauwe Broek', color: '#0000FF', price: 0, owned: true, equipped: true },
+                    { name: 'Zwarte Broek', color: '#000000', price: 12, owned: false },
+                    { name: 'Groene Broek', color: '#228B22', price: 18, owned: false }
+                ],
+                shoes: [
+                    { name: 'Zwarte Schoenen', color: '#000000', price: 0, owned: true, equipped: true },
+                    { name: 'Witte Schoenen', color: '#FFFFFF', price: 15, owned: false },
+                    { name: 'Rode Schoenen', color: '#FF0000', price: 20, owned: false }
+                ],
+                hats: [
+                    { name: 'Rode Pet', color: '#FF0000', price: 25, owned: false, equipped: false },
+                    { name: 'Blauwe Hoed', color: '#0000FF', price: 30, owned: false, equipped: false },
+                    { name: 'Groene Cap', color: '#00FF00', price: 28, owned: false, equipped: false }
+                ],
+                glasses: [
+                    { name: 'Coole Bril', price: 35, owned: false, equipped: false }
+                ]
+            },
+            toys: [
+                { name: 'Teddybeer', drawing: 'teddybeer', price: 25, owned: false }
+            ],
+            food: [
+                { name: 'Pizza', drawing: 'pizza', price: 8, owned: false },
+                { name: 'Hamburger', drawing: 'hamburger', price: 7, owned: false }
+            ],
+            pets: [
+                { name: 'Hond', drawing: 'hond', price: 100, owned: false },
+                { name: 'Kat', drawing: 'kat', price: 80, owned: false },
+                { name: 'Vis', drawing: 'vis', price: 30, owned: false }
+            ],
+            vehicles: [
+                { name: 'Fiets', drawing: 'fiets', price: 150, owned: false, speed: 100 },
+                { name: 'Auto', drawing: 'auto', price: 500, owned: false, speed: 200 }
+            ],
+            books: [
+                { name: 'Avonturenboek', price: 15, owned: false, read: false },
+                { name: 'Sprookjesboek', price: 12, owned: false, read: false },
+                { name: 'Stripboek', price: 10, owned: false, read: false },
+                { name: 'Dierenboek', price: 18, owned: false, read: false }
+            ],
+            medicine: [
+                { name: 'Pijnstillers', price: 8, owned: false },
+                { name: 'Hoestdrank', price: 12, owned: false },
+                { name: 'Pleisters', price: 5, owned: false },
+                { name: 'Vitamine', price: 15, owned: false }
+            ],
+            furniture: [
+                { name: 'Bank', drawing: 'bank', price: 150, owned: false },
+                { name: 'Bed', drawing: 'bed', price: 200, owned: false },
+                { name: 'Tafel', drawing: 'tafel', price: 80, owned: false },
+                { name: 'TV', drawing: 'tv', price: 250, owned: false }
+            ]
+        };
+        
+        let homework = {
+            hasHomework: false,
+            subject: '',
+            done: false
+        };
+        
+        function movePlayer(direction) {
+            if (currentLocation !== 'outside') return;
+            
+            if (direction === 'left') {
+                playerPosition = Math.max(50, playerPosition - moveSpeed);
+            } else {
+                playerPosition = Math.min(3000, playerPosition + moveSpeed);
+            }
+            document.getElementById('player').style.left = playerPosition + 'px';
+            
+            if (currentVehicle) {
+                document.getElementById('vehicle-display').style.left = playerPosition + 'px';
+            }
+            
+            const screenWidth = window.innerWidth;
+            const centerScreen = screenWidth / 2;
+            
+            if (playerPosition > centerScreen) {
+                worldOffset = -(playerPosition - centerScreen);
+                worldOffset = Math.max(worldOffset, -(4500 - screenWidth));
+                document.getElementById('world').style.transform = `translateX(${worldOffset}px)`;
+            }
+        }
+        
+        function enterBuilding(buildingType) {
+            currentLocation = buildingType;
+            document.getElementById('outsideScene').classList.remove('active');
+            
+            const interiorScene = document.getElementById('interiorScene');
+            interiorScene.innerHTML = '';
+            interiorScene.classList.add('active');
+            
+            const locationNames = {
+                'house': 'JOUW HUIS', 'clothes': 'KLEDINGWINKEL', 'toys': 'SPEELGOEDWINKEL',
+                'restaurant': 'RESTAURANT', 'school': 'SCHOOL', 'park': 'PARK',
+                'vehicles': 'VOERTUIGENWINKEL', 'work': 'WERK', 'bookstore': 'BOEKENWINKEL', 'pharmacy': 'APOTHEEK', 'furniture': 'MEUBELWINKEL'
+            };
+            
+            document.querySelector('#locationDisplay .ui-value').textContent = locationNames[buildingType];
+            
+            if (buildingType === 'house') createHouseInterior();
+            else if (buildingType === 'work') createWorkInterior();
+            else if (buildingType === 'clothes') createClothesShopInterior();
+            else if (buildingType === 'restaurant') createRestaurantInterior();
+            else if (buildingType === 'school') createSchoolInterior();
+            else if (buildingType === 'park') createParkInterior();
+            else if (buildingType === 'vehicles') createVehicleShopInterior();
+            else if (buildingType === 'bookstore') createBookstoreInterior();
+            else if (buildingType === 'pharmacy') createPharmacyInterior();
+            else if (buildingType === 'furniture') createFurnitureShopInterior();
+            else createShopInterior(buildingType);
+        }
+        
+        function createHouseInterior() {
+            const interior = document.getElementById('interiorScene');
+            interior.style.background = 'linear-gradient(to bottom, #FFF9E6, #FFE4B5)';
+            
+            let itemsHTML = '';
+            let totalItems = 0;
+            
+            // Meubels op logische plekken
+            if (inventory.furniture) {
+                // Bank - links tegen de muur
+                const bank = inventory.furniture.find(item => item.name === 'Bank' && item.owned);
+                if (bank) {
+                    itemsHTML += `<div style="position: absolute; left: 50px; bottom: 200px;">${drawings.bank}</div>`;
+                    totalItems++;
+                }
+                
+                // TV - aan de muur tegenover de bank (midden boven)
+                const tv = inventory.furniture.find(item => item.name === 'TV' && item.owned);
+                if (tv) {
+                    itemsHTML += `<div style="position: absolute; left: 50%; transform: translateX(-50%); top: 80px;">${drawings.tv}</div>`;
+                    totalItems++;
+                }
+                
+                // Tafel - in het midden van de kamer
+                const tafel = inventory.furniture.find(item => item.name === 'Tafel' && item.owned);
+                if (tafel) {
+                    itemsHTML += `<div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 220px;">${drawings.tafel}</div>`;
+                    totalItems++;
+                }
+                
+                // Bed - rechts achterin de hoek
+                const bed = inventory.furniture.find(item => item.name === 'Bed' && item.owned);
+                if (bed) {
+                    itemsHTML += `<div style="position: absolute; right: 80px; top: 150px;">${drawings.bed}</div>`;
+                    totalItems++;
+                }
+            }
+            
+            // Boekenplank - rechts aan de muur met boeken erop
+            const ownedBooks = inventory.books.filter(item => item.owned);
+            if (ownedBooks.length > 0) {
+                let bookShelf = `<div style="position: absolute; right: 100px; bottom: 250px;"><svg width="${ownedBooks.length * 45 + 20}" height="120">`;
+                // Plank
+                bookShelf += `<rect x="0" y="80" width="${ownedBooks.length * 45 + 20}" height="12" fill="#8B4513" stroke="#654321" stroke-width="2"/>`;
+                // Boeken op de plank
+                ownedBooks.forEach((item, index) => {
+                    bookShelf += `<g transform="translate(${index * 45 + 5}, 20)" style="width: 35px; height: 60px;">${drawings.book}</g>`;
+                });
+                bookShelf += `</svg></div>`;
+                itemsHTML += bookShelf;
+                totalItems += ownedBooks.length;
+            }
+            
+            // Speelgoed - verspreid op de vloer
+            const ownedToys = inventory.toys.filter(item => item.owned);
+            const toyPositions = [
+                { x: 200, y: 120 },
+                { x: 320, y: 110 },
+                { x: 450, y: 125 }
+            ];
+            ownedToys.forEach((item, index) => {
+                const pos = toyPositions[index] || { x: 200 + index * 100, y: 120 };
+                itemsHTML += `<div style="position: absolute; left: ${pos.x}px; bottom: ${pos.y}px; width: 60px; height: 60px;">${drawings[item.drawing]}</div>`;
+                totalItems++;
+            });
+            
+            // Huisdieren - lopend/zittend in de kamer
+            const ownedPets = inventory.pets.filter(item => item.owned);
+            const petPositions = [
+                { x: 150, y: 180 },  // Bij de bank
+                { x: 500, y: 160 },  // Midden in de kamer
+                { x: 350, y: 140 }   // Voor de tafel
+            ];
+            ownedPets.forEach((item, index) => {
+                const pos = petPositions[index] || { x: 300 + index * 120, y: 150 };
+                itemsHTML += `<div style="position: absolute; left: ${pos.x}px; bottom: ${pos.y}px; width: 70px; height: 70px;">${drawings[item.drawing]}</div>`;
+                totalItems++;
+            });
+            
+            // Als het huis leeg is
+            let emptyMessage = '';
+            if (totalItems === 0) {
+                emptyMessage = '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; font-size: 24px; color: #666;"><div style="font-size: 80px;">HUIS</div><div style="margin-top: 20px;">Je huis is nog leeg!<br>Ga winkelen!</div></div>';
+            }
+            
+            interior.innerHTML = `<div class="interior"><div class="interior-wall" style="background: linear-gradient(to bottom, #F5DEB3, #DEB887);"></div><div class="interior-floor"></div><div class="exit-door" onclick="exitBuilding()"></div><div style="position: absolute; top: 10px; right: 50px; background: linear-gradient(to bottom, #D2691E, #8B4513); padding: 15px 40px; border-radius: 15px; border: 5px solid #654321; box-shadow: 0 8px 16px rgba(0,0,0,0.3);"><div style="font-size: 35px; font-weight: bold; color: white; text-shadow: 3px 3px 6px rgba(0,0,0,0.5);">JOUW HUIS</div></div>${itemsHTML}${emptyMessage}</div>`;
+        }
+        
+        function showHouseInventory() {
+            // Deze functie wordt niet meer gebruikt maar blijft voor compatibiliteit
+        }
+        
+        let workScore = 0;
+        let workTimeLeft = 15;
+        let workTimerInterval = null;
+        let workSpawnInterval = null;
+        let workGameActive = false;
+        
+        function createWorkInterior() {
+            const interior = document.getElementById('interiorScene');
+            interior.style.background = 'linear-gradient(to bottom, #E3F2FD, #BBDEFB)';
+            interior.innerHTML = `<div class="interior"><div class="interior-wall" style="background: linear-gradient(to bottom, #90CAF9, #64B5F6);"></div><div class="interior-floor"></div><div class="exit-door" onclick="exitBuilding()"></div><div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: linear-gradient(to bottom, #9370DB, #8A2BE2); padding: 20px 60px; border-radius: 15px; border: 5px solid #4B0082; box-shadow: 0 8px 16px rgba(0,0,0,0.3);"><div style="font-size: 40px; font-weight: bold; color: white; text-shadow: 3px 3px 6px rgba(0,0,0,0.5);">WERK</div></div><div id="workStartScreen" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.95); padding: 40px; border-radius: 15px; border: 3px solid #FFD700; text-align: center;"><div style="font-size: 24px; font-weight: bold; margin-bottom: 15px;">Pakketjes Inpakken!</div><div style="font-size: 16px; margin-bottom: 20px;">Klik zo snel mogelijk op de dozen die verschijnen!<br>Je hebt 15 seconden!</div><button onclick="startWorkGame()" style="padding: 15px 30px; font-size: 18px;">Begin met Werken!</button></div><div id="workGameArea" class="work-area"></div></div>`;
+        }
+        
+        function startWorkGame() {
+            document.getElementById('workStartScreen').style.display = 'none';
+            workScore = 0;
+            workTimeLeft = 15;
+            workGameActive = true;
+            
+            const gameArea = document.getElementById('workGameArea');
+            gameArea.innerHTML = `
+                <div class="work-score">Dozen: <span id="workScoreDisplay">0</span></div>
+                <div class="work-timer-bar"><div class="work-timer-fill" id="workTimerFill" style="width: 100%;"></div></div>
+            `;
+            
+            spawnWorkTarget();
+            
+            workSpawnInterval = setInterval(() => {
+                if (workGameActive) spawnWorkTarget();
+            }, 900);
+            
+            workTimerInterval = setInterval(() => {
+                workTimeLeft -= 0.1;
+                const percent = (workTimeLeft / 15) * 100;
+                const fillBar = document.getElementById('workTimerFill');
+                if (fillBar) fillBar.style.width = percent + '%';
+                
+                if (workTimeLeft <= 0) {
+                    endWorkGame();
+                }
+            }, 100);
+        }
+        
+        function spawnWorkTarget() {
+            const gameArea = document.getElementById('workGameArea');
+            if (!gameArea) return;
+            
+            const maxX = gameArea.offsetWidth - 90;
+            const maxY = gameArea.offsetHeight - 250;
+            const x = Math.max(20, Math.random() * maxX);
+            const y = Math.max(180, Math.random() * maxY + 180);
+            
+            const target = document.createElement('div');
+            target.className = 'work-target';
+            target.style.left = x + 'px';
+            target.style.top = y + 'px';
+            target.innerHTML = `<svg viewBox="0 0 70 70" width="70" height="70"><rect x="10" y="20" width="50" height="40" fill="#D2691E" stroke="#654321" stroke-width="3" rx="3"/><rect x="10" y="20" width="50" height="12" fill="#8B4513" stroke="#654321" stroke-width="2"/><line x1="35" y1="20" x2="35" y2="60" stroke="#654321" stroke-width="2"/><rect x="28" y="15" width="14" height="10" fill="#F4A460" stroke="#654321" stroke-width="2"/></svg>`;
+            target.onclick = function() {
+                if (!workGameActive) return;
+                workScore++;
+                document.getElementById('workScoreDisplay').textContent = workScore;
+                target.remove();
+                
+                const earnMsg = document.createElement('div');
+                earnMsg.style.position = 'absolute';
+                earnMsg.style.left = x + 'px';
+                earnMsg.style.top = y + 'px';
+                earnMsg.style.color = '#4CAF50';
+                earnMsg.style.fontWeight = 'bold';
+                earnMsg.style.fontSize = '20px';
+                earnMsg.textContent = '+€2';
+                earnMsg.style.pointerEvents = 'none';
+                earnMsg.style.animation = 'none';
+                gameArea.appendChild(earnMsg);
+                setTimeout(() => earnMsg.remove(), 500);
+            };
+            
+            gameArea.appendChild(target);
+            
+            setTimeout(() => {
+                if (target.parentNode) target.remove();
+            }, 1500);
+        }
+        
+        function endWorkGame() {
+            workGameActive = false;
+            clearInterval(workTimerInterval);
+            clearInterval(workSpawnInterval);
+            
+            const earned = workScore * 2;
+            money += earned;
+            updateMoney();
+            
+            const gameArea = document.getElementById('workGameArea');
+            gameArea.innerHTML = `
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.95); padding: 40px; border-radius: 15px; border: 3px solid #FFD700; text-align: center;">
+                    <div style="font-size: 28px; font-weight: bold; margin-bottom: 15px; color: #4CAF50;">Goed gewerkt!</div>
+                    <div style="font-size: 20px; margin-bottom: 10px;">Je hebt ${workScore} dozen ingepakt!</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #FF6347; margin-bottom: 20px;">Je verdient €${earned}!</div>
+                    <button onclick="startWorkGame()" style="padding: 15px 30px; font-size: 18px;">Nog een keer werken!</button>
+                </div>
+            `;
+        }
+        
+        function createRestaurantInterior() {
+            const interior = document.getElementById('interiorScene');
+            interior.style.background = 'linear-gradient(to bottom, #FFE4E1, #FFC0CB)';
+            interior.innerHTML = `<div class="interior"><div class="interior-wall" style="background: linear-gradient(to bottom, #FF6347, #DC143C);"></div><div class="interior-floor"></div><div class="exit-door" onclick="exitBuilding()"></div><div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: linear-gradient(to bottom, #FF6347, #DC143C); padding: 20px 60px; border-radius: 15px; border: 5px solid #8B0000; box-shadow: 0 8px 16px rgba(0,0,0,0.3);"><div style="font-size: 40px; font-weight: bold; color: white; text-shadow: 3px 3px 6px rgba(0,0,0,0.5);">RESTAURANT</div></div>` + createFoodDisplay() + `</div>`;
+        }
+        
+        function createFoodDisplay() {
+            let html = '';
+            let x = 80, y = 120;
+            inventory.food.forEach((item, index) => {
+                const status = item.owned ? 'GEKOCHT' : `€${item.price}`;
+                html += `<div class="shop-item" style="left: ${x}px; top: ${y}px;" onclick="buyItem('food', ${index})"><div class="item-display">${drawings[item.drawing]}</div><div class="item-info">${item.name}<br>${status}</div></div>`;
+                x += 140;
+            });
+            return html;
+        }
+        
+        function createSchoolInterior() {
+            const interior = document.getElementById('interiorScene');
+            interior.style.background = 'linear-gradient(to bottom, #FFF8DC, #DEB887)';
+            
+            let homeworkStatus = '';
+            if (homework.hasHomework && !homework.done) {
+                homeworkStatus = `<div style="background: #FFE4B5; padding: 15px; border-radius: 10px; border: 3px solid #FF6347; margin-top: 20px;"><strong>📝 Je hebt huiswerk!</strong><br>Vak: ${homework.subject}<br><button onclick="doHomework()" style="margin-top: 10px; padding: 10px 20px;">Huiswerk maken</button></div>`;
+            } else if (homework.hasHomework && homework.done) {
+                homeworkStatus = `<div style="background: #C8E6C9; padding: 15px; border-radius: 10px; border: 3px solid #4CAF50; margin-top: 20px;"><strong> Je huiswerk is af!</strong><br>Goed gedaan!</div>`;
+            }
+            
+            interior.innerHTML = `
+                <div class="interior">
+                    <div class="interior-wall" style="background: linear-gradient(to bottom, #FFE4B5, #DEB887);"></div>
+                    <div class="interior-floor"></div>
+                    <div class="exit-door" onclick="exitBuilding()"></div>
+                    <div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: linear-gradient(to bottom, #FFE4B5, #DEB887); padding: 20px 60px; border-radius: 15px; border: 5px solid #8B4513; box-shadow: 0 8px 16px rgba(0,0,0,0.3);">
+                        <div style="font-size: 40px; font-weight: bold; color: white; text-shadow: 3px 3px 6px rgba(0,0,0,0.5);">SCHOOL</div>
+                    </div>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.95); padding: 40px; border-radius: 15px; border: 3px solid #FFD700; text-align: center; font-size: 20px; font-weight: bold; max-width: 500px;">
+                        BOEKEN Welkom op school! BOEKEN<br><br>
+                        <button onclick="getHomework()" style="padding: 15px 30px; font-size: 18px;">Krijg Huiswerk</button>
+                        ${homeworkStatus}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function getHomework() {
+            const subjects = ['Rekenen', 'Taal', 'Geschiedenis', 'Aardrijkskunde', 'Engels'];
+            const randomSubject = subjects[Math.floor(Math.random() * subjects.length)];
+            homework.hasHomework = true;
+            homework.subject = randomSubject;
+            homework.done = false;
+            showMessage(`BOEKEN Je hebt huiswerk gekregen voor ${randomSubject}!`);
+            createSchoolInterior();
+        }
+        
+        function doHomework() {
+            homework.done = true;
+            const reward = 20;
+            money += reward;
+            updateMoney();
+            showMessage(` Huiswerk af! Je krijgt €${reward} voor je harde werk!`);
+            createSchoolInterior();
+        }
+        
+        function createParkInterior() {
+            const interior = document.getElementById('interiorScene');
+            interior.style.background = 'linear-gradient(to bottom, #87CEEB, #90EE90)';
+            interior.innerHTML = `<div class="interior"><div class="interior-wall" style="background: linear-gradient(to bottom, #87CEEB, #90EE90);"></div><div class="interior-floor" style="background: #228B22;"></div><div class="exit-door" onclick="exitBuilding()"></div><svg style="position: absolute; left: 100px; top: 100px;" width="300" height="300"><rect x="50" y="150" width="30" height="100" fill="#8B4513"/><circle cx="65" cy="120" r="60" fill="#228B22"/><circle cx="200" cy="200" r="15" fill="#FF69B4"/><circle cx="250" cy="190" r="15" fill="#FFD700"/><circle cx="220" cy="220" r="15" fill="#FF0000"/></svg><div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: linear-gradient(to bottom, #90EE90, #228B22); padding: 20px 60px; border-radius: 15px; border: 5px solid #006400; box-shadow: 0 8px 16px rgba(0,0,0,0.3);"><div style="font-size: 40px; font-weight: bold; color: white; text-shadow: 3px 3px 6px rgba(0,0,0,0.5);">PARK</div></div></div>`;
+        }
+        
+        function createBookstoreInterior() {
+            const interior = document.getElementById('interiorScene');
+            interior.style.background = 'linear-gradient(to bottom, #F5DEB3, #DEB887)';
+            let html = `<div class="interior"><div class="interior-wall" style="background: linear-gradient(to bottom, #D2B48C, #BC8F8F);"></div><div class="interior-floor"></div><div class="exit-door" onclick="exitBuilding()"></div><div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: linear-gradient(to bottom, #8B4513, #654321); padding: 20px 60px; border-radius: 15px; border: 5px solid #3E2723; box-shadow: 0 8px 16px rgba(0,0,0,0.3);"><div style="font-size: 40px; font-weight: bold; color: white; text-shadow: 3px 3px 6px rgba(0,0,0,0.5);">BOEKEN BOEKENWINKEL</div></div>`;
+            
+            let x = 80, y = 120;
+            html += `<svg style="position: absolute; left: 60px; top: ${y + 70}px;" width="500" height="20"><rect x="0" y="0" width="500" height="12" fill="#8B4513" stroke="#654321" stroke-width="2"/></svg>`;
+            
+            inventory.books.forEach((item, index) => {
+                const status = item.owned ? (item.read ? ' GELEZEN' : 'Gelezen GEKOCHT') : `€${item.price}`;
+                html += `<div class="shop-item" style="left: ${x}px; top: ${y}px;" onclick="buyBook(${index})"><div class="item-display">${drawings.book}</div><div class="item-info">${item.name}<br>${status}</div></div>`;
+                x += 140;
+            });
+            
+            html += '</div>';
+            interior.innerHTML = html;
+        }
+        
+        function createPharmacyInterior() {
+            const interior = document.getElementById('interiorScene');
+            interior.style.background = 'linear-gradient(to bottom, #F0FFF0, #E0FFE0)';
+            let html = `<div class="interior"><div class="interior-wall" style="background: linear-gradient(to bottom, #E8F5E9, #C8E6C9);"></div><div class="interior-floor"></div><div class="exit-door" onclick="exitBuilding()"></div><div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: linear-gradient(to bottom, #FFFFFF, #E8E8E8); padding: 20px 60px; border-radius: 15px; border: 5px solid #00AA00; box-shadow: 0 8px 16px rgba(0,0,0,0.3);"><div style="font-size: 40px; font-weight: bold; color: #00AA00; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">MEDICIJN APOTHEEK</div></div>`;
+            
+            let x = 80, y = 120;
+            html += `<svg style="position: absolute; left: 60px; top: ${y + 70}px;" width="500" height="20"><rect x="0" y="0" width="500" height="12" fill="#FFFFFF" stroke="#00AA00" stroke-width="2"/></svg>`;
+            
+            inventory.medicine.forEach((item, index) => {
+                const status = item.owned ? ' GEKOCHT' : `€${item.price}`;
+                html += `<div class="shop-item" style="left: ${x}px; top: ${y}px;" onclick="buyMedicine(${index})"><div class="item-display">${drawings.medicine}</div><div class="item-info">${item.name}<br>${status}</div></div>`;
+                x += 140;
+            });
+            
+            html += '</div>';
+            interior.innerHTML = html;
+        }
+        
+        function createFurnitureShopInterior() {
+            const interior = document.getElementById('interiorScene');
+            interior.style.background = 'linear-gradient(to bottom, #FFF3E0, #FFE0B2)';
+            let html = `<div class="interior"><div class="interior-wall" style="background: linear-gradient(to bottom, #FFCC80, #FFB74D);"></div><div class="interior-floor"></div><div class="exit-door" onclick="exitBuilding()"></div><div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: linear-gradient(to bottom, #DEB887, #D2691E); padding: 20px 60px; border-radius: 15px; border: 5px solid #8B4513; box-shadow: 0 8px 16px rgba(0,0,0,0.3);"><div style="font-size: 40px; font-weight: bold; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">MEUBELWINKEL</div></div>`;
+            
+            let x = 80, y = 120;
+            html += `<svg style="position: absolute; left: 60px; top: ${y + 90}px;" width="600" height="20"><rect x="0" y="0" width="600" height="12" fill="#8B4513" stroke="#654321" stroke-width="2"/></svg>`;
+            
+            inventory.furniture.forEach((item, index) => {
+                const status = item.owned ? 'GEKOCHT' : `€${item.price}`;
+                html += `<div class="shop-item" style="left: ${x}px; top: ${y}px;" onclick="buyFurniture(${index})"><div class="item-display">${drawings[item.drawing]}</div><div class="item-info">${item.name}<br>${status}</div></div>`;
+                x += 160;
+            });
+            
+            html += '</div>';
+            interior.innerHTML = html;
+        }
+        
+        function buyFurniture(index) {
+            const item = inventory.furniture[index];
+            if (item.owned) { showMessage('Dit heb je al!'); return; }
+            if (money >= item.price) {
+                money -= item.price;
+                item.owned = true;
+                updateMoney();
+                showMessage(`Je hebt ${item.name} gekocht! Ga naar je huis om het te zien!`);
+                createFurnitureShopInterior();
+            } else {
+                showMessage(`Je hebt niet genoeg geld!`);
+            }
+        }
+        
+        function buyBook(index) {
+            const item = inventory.books[index];
+            if (item.owned) {
+                if (!item.read) {
+                    item.read = true;
+                    showMessage(`Gelezen Je leest ${item.name}! Wat leuk!`);
+                    createBookstoreInterior();
+                } else {
+                    showMessage('Je hebt dit boek al gelezen!');
+                }
+                return;
+            }
+            if (money >= item.price) {
+                money -= item.price;
+                item.owned = true;
+                updateMoney();
+                showMessage(`BOEKEN Je hebt ${item.name} gekocht!`);
+                createBookstoreInterior();
+            } else {
+                showMessage(`Je hebt niet genoeg geld!`);
+            }
+        }
+        
+        function buyMedicine(index) {
+            const item = inventory.medicine[index];
+            if (item.owned) { showMessage('Dit heb je al!'); return; }
+            if (money >= item.price) {
+                money -= item.price;
+                item.owned = true;
+                updateMoney();
+                showMessage(`MEDICIJN Je hebt ${item.name} gekocht!`);
+                createPharmacyInterior();
+            } else {
+                showMessage(`Je hebt niet genoeg geld!`);
+            }
+        }
+        
+        function createVehicleShopInterior() {
+            const interior = document.getElementById('interiorScene');
+            interior.style.background = 'linear-gradient(to bottom, #E3F2FD, #BBDEFB)';
+            let html = `<div class="interior"><div class="interior-wall" style="background: linear-gradient(to bottom, #64B5F6, #4169E1);"></div><div class="interior-floor"></div><div class="exit-door" onclick="exitBuilding()"></div><div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: linear-gradient(to bottom, #4169E1, #0000CD); padding: 20px 60px; border-radius: 15px; border: 5px solid #00008B; box-shadow: 0 8px 16px rgba(0,0,0,0.3);"><div style="font-size: 40px; font-weight: bold; color: white; text-shadow: 3px 3px 6px rgba(0,0,0,0.5);">VOERTUIGEN</div></div>`;
+            
+            let x = 100, y = 150;
+            inventory.vehicles.forEach((item, index) => {
+                const status = item.owned ? (currentVehicle === item.name ? 'IN GEBRUIK' : 'GEKOCHT') : `€${item.price}`;
+                const action = item.owned ? (currentVehicle === item.name ? 'Uitstappen' : 'Gebruik') : 'Koop';
+                html += `<div class="shop-item" style="left: ${x}px; top: ${y}px;" onclick="handleVehicle(${index})"><div class="item-display">${drawings[item.drawing]}</div><div class="item-info">${item.name}<br>${status}<br><button style="margin-top: 5px;">${action}</button></div></div>`;
+                x += 200;
+            });
+            
+            html += '</div>';
+            interior.innerHTML = html;
+        }
+        
+        function createClothesShopInterior() {
+            const interior = document.getElementById('interiorScene');
+            interior.style.background = 'linear-gradient(to bottom, #FCE4EC, #F8BBD0)';
+            let html = `<div class="interior"><div class="interior-wall" style="background: linear-gradient(to bottom, #F48FB1, #F06292);"></div><div class="interior-floor"></div><div class="exit-door" onclick="exitBuilding()"></div><div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: linear-gradient(to bottom, #FF69B4, #FF1493); padding: 20px 60px; border-radius: 15px; border: 5px solid #C71585; box-shadow: 0 8px 16px rgba(0,0,0,0.3);"><div style="font-size: 40px; font-weight: bold; color: white; text-shadow: 3px 3px 6px rgba(0,0,0,0.5);">KLEDINGWINKEL</div></div>`;
+            
+            let y = 120;
+            const categories = [
+                { key: 'shirts', title: 'Shirts', drawing: 'shirt' },
+                { key: 'pants', title: 'Broeken', drawing: 'pants' },
+                { key: 'shoes', title: 'Schoenen', drawing: 'shoes' },
+                { key: 'hats', title: 'Hoeden', drawing: 'hat' },
+                { key: 'glasses', title: 'Brillen', drawing: 'glasses' }
+            ];
+            
+            categories.forEach(cat => {
+                const rackX = 90;
+                html += `<div style="position: absolute; top: ${y - 20}px; left: 50px; font-size: 20px; font-weight: bold; background: rgba(255,255,255,0.9); padding: 8px 15px; border-radius: 8px;">${cat.title}</div>`;
+                html += `<svg style="position: absolute; left: ${rackX - 20}px; top: ${y - 15}px;" width="${inventory.clothes[cat.key].length * 120 + 40}" height="150"><rect x="10" y="10" width="${inventory.clothes[cat.key].length * 120 + 20}" height="8" fill="#654321" stroke="#000" stroke-width="2"/></svg>`;
+                
+                inventory.clothes[cat.key].forEach((item, index) => {
+                    const status = item.equipped ? 'DRAAG IK' : (item.owned ? 'GEKOCHT' : `€${item.price}`);
+                    const displayDrawing = cat.drawing === 'glasses' ? drawings.glasses : (cat.drawing === 'hat' ? drawings.hat(item.color || '#FF0000') : drawings[cat.drawing](item.color));
+                    html += `<div class="shop-item" style="left: ${rackX + index * 120}px; top: ${y}px;" onclick="buyClothes('${cat.key}', ${index})"><div class="item-display">${displayDrawing}</div><div class="item-info">${item.name}<br>${status}</div></div>`;
+                });
+                
+                y += 180;
+            });
+            
+            html += '</div>';
+            interior.innerHTML = html;
+        }
+        
+        function createShopInterior(shopType) {
+            const interior = document.getElementById('interiorScene');
+            interior.style.background = 'linear-gradient(to bottom, #FFF9C4, #FFF176)';
+            let html = `<div class="interior"><div class="interior-wall" style="background: linear-gradient(to bottom, #FFF176, #FFF9C4);"></div><div class="interior-floor"></div><div class="exit-door" onclick="exitBuilding()"></div><div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: #FFF176; padding: 20px 60px; border-radius: 15px; border: 5px solid #333; box-shadow: 0 8px 16px rgba(0,0,0,0.3);"><div style="font-size: 40px; font-weight: bold; color: white; text-shadow: 3px 3px 6px rgba(0,0,0,0.5);">${shopType === 'toys' ? 'SPEELGOEDWINKEL' : shopType === 'pets' ? 'DIERENWINKEL' : 'WINKEL'}</div></div>`;
+            
+            let x = 80, y = 120;
+            html += `<svg style="position: absolute; left: 60px; top: ${y + 70}px;" width="500" height="20"><rect x="0" y="0" width="500" height="12" fill="#8B4513" stroke="#654321" stroke-width="2"/></svg>`;
+            
+            inventory[shopType].forEach((item, index) => {
+                const status = item.owned ? 'GEKOCHT' : `€${item.price}`;
+                html += `<div class="shop-item" style="left: ${x}px; top: ${y}px;" onclick="buyItem('${shopType}', ${index})"><div class="item-display">${drawings[item.drawing]}</div><div class="item-info">${item.name}<br>${status}</div></div>`;
+                x += 140;
+            });
+            
+            html += '</div>';
+            interior.innerHTML = html;
+        }
+        
+        function exitBuilding() {
+            currentLocation = 'outside';
+            document.getElementById('interiorScene').classList.remove('active');
+            document.getElementById('outsideScene').classList.add('active');
+            document.querySelector('#locationDisplay .ui-value').textContent = 'BUITEN';
+        }
+        
+        function buyClothes(category, index) {
+            const item = inventory.clothes[category][index];
+            if (item.equipped) { showMessage('Je draagt dit al!'); return; }
+            if (!item.owned) {
+                if (money >= item.price) {
+                    money -= item.price;
+                    item.owned = true;
+                    updateMoney();
+                    showMessage(`Je hebt ${item.name} gekocht!`);
+                    equipClothes(category, index);
+                    createClothesShopInterior();
+                } else {
+                    showMessage(`Je hebt niet genoeg geld!`);
+                }
+            } else {
+                equipClothes(category, index);
+                showMessage(`Je draagt nu ${item.name}!`);
+                createClothesShopInterior();
+            }
+        }
+        
+        function equipClothes(category, index) {
+            inventory.clothes[category].forEach(item => item.equipped = false);
+            inventory.clothes[category][index].equipped = true;
+            const item = inventory.clothes[category][index];
+            
+            if (category === 'shirts') document.querySelectorAll('#shirt').forEach(el => el.setAttribute('fill', item.color));
+            else if (category === 'pants') document.querySelectorAll('.pants').forEach(el => el.setAttribute('fill', item.color));
+            else if (category === 'shoes') document.querySelectorAll('.shoes').forEach(el => el.setAttribute('fill', item.color));
+            else if (category === 'hats') {
+                const hatHolder = document.getElementById('hat-holder');
+                hatHolder.innerHTML = drawings.hat(item.color);
+            }
+            else if (category === 'glasses') {
+                const glassesHolder = document.getElementById('glasses-holder');
+                glassesHolder.innerHTML = `<g transform="translate(5, 12)">${drawings.glasses}</g>`;
+            }
+        }
+        
+        function buyItem(category, index) {
+            const item = inventory[category][index];
+            if (item.owned) { showMessage('Dit heb je al!'); return; }
+            if (money >= item.price) {
+                money -= item.price;
+                item.owned = true;
+                updateMoney();
+                showMessage(`Je hebt ${item.name} gekocht!`);
+                if (category === 'restaurant') createRestaurantInterior();
+                else createShopInterior(category);
+            } else {
+                showMessage(`Je hebt niet genoeg geld!`);
+            }
+        }
+        
+        function handleVehicle(index) {
+            const vehicle = inventory.vehicles[index];
+            
+            if (!vehicle.owned) {
+                if (money >= vehicle.price) {
+                    money -= vehicle.price;
+                    vehicle.owned = true;
+                    updateMoney();
+                    showMessage(`Je hebt een ${vehicle.name} gekocht!`);
+                    currentVehicle = vehicle.name;
+                    moveSpeed = vehicle.speed;
+                    updateVehicleDisplay();
+                    createVehicleShopInterior();
+                } else {
+                    showMessage(`Je hebt niet genoeg geld!`);
+                }
+            } else {
+                if (currentVehicle === vehicle.name) {
+                    currentVehicle = null;
+                    moveSpeed = 50;
+                    document.getElementById('vehicle-display').style.display = 'none';
+                    document.getElementById('vehicleStatus').textContent = 'Te voet';
+                    showMessage('Je loopt nu te voet');
+                } else {
+                    currentVehicle = vehicle.name;
+                    moveSpeed = vehicle.speed;
+                    updateVehicleDisplay();
+                    showMessage(`Je gebruikt nu je ${vehicle.name}!`);
+                }
+                createVehicleShopInterior();
+            }
+        }
+        
+        function updateVehicleDisplay() {
+            const vehicle = inventory.vehicles.find(v => v.name === currentVehicle);
+            if (vehicle) {
+                const display = document.getElementById('vehicle-display');
+                display.innerHTML = drawings[vehicle.drawing];
+                display.style.display = 'block';
+                document.getElementById('vehicleStatus').textContent = currentVehicle;
+            }
+        }
+        
+        function talkToFriend(name, message) {
+            const responses = [
+                `${name}: "${message}"`,
+                `Je praat met ${name}! Leuk om bij te kletsen!`
+            ];
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+            showMessage(randomResponse);
+        }
+        
+        function updateMoney() {
+            document.getElementById('money').textContent = '€' + money;
+        }
+        
+        function showMessage(text) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.style.display = 'block';
+            setTimeout(() => { msg.style.display = 'none'; }, 2500);
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a') movePlayer('left');
+            else if (e.key === 'ArrowRight' || e.key === 'd') movePlayer('right');
+        });
+        
+        setTimeout(() => { showMessage('Welkom in de grote stad! Klik op gebouwen!'); }, 500);
+    </script>
+</body>
+</html>

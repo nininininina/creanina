@@ -20,16 +20,14 @@ const rasterStijl = {
   marginTop: "1.5rem",
 };
 
-function FrietjesIcoon() {
+function SpelIcoon({ achtergrond, accent }: { achtergrond: string; accent: string }) {
   return (
     <svg viewBox="0 0 160 100" style={{ width: "100%", display: "block" }}>
-      <rect width="160" height="100" fill="#fbe8d0" />
-      <path d="M62 44 L98 44 L92 92 H68 Z" fill="#E8432E" />
-      <rect x="58" y="34" width="44" height="14" rx="2" fill="#E8432E" />
-      <rect x="66" y="16" width="5" height="26" fill="#FFC53D" />
-      <rect x="76" y="10" width="5" height="32" fill="#FFC53D" />
-      <rect x="86" y="18" width="5" height="24" fill="#FFC53D" />
-      <rect x="94" y="22" width="5" height="20" fill="#FFC53D" />
+      <rect width="160" height="100" fill={achtergrond} />
+      <rect x="50" y="42" width="60" height="30" rx="15" fill={accent} />
+      <circle cx="68" cy="57" r="6" fill="#fff" />
+      <circle cx="96" cy="50" r="5" fill="#fff" />
+      <circle cx="108" cy="60" r="5" fill="#fff" />
     </svg>
   );
 }
@@ -54,13 +52,13 @@ export default function SpelletjesPage() {
       <div style={rasterStijl}>
         {spelletjes.map((spel) => (
           <Link key={spel.naam} href={"/spelletjes/" + spel.naam} style={kaartStijl}>
-            <FrietjesIcoon />
+            <SpelIcoon achtergrond={spel.achtergrond} accent={spel.accent} />
             <div style={{ padding: "0.9rem 1rem 1rem" }}>
-              <h3 style={{ color: "#d9638c", fontSize: "1.15rem", lineHeight: 1.25, margin: 0 }}>
+              <h3 style={{ color: spel.accent, fontSize: "1.15rem", lineHeight: 1.25, margin: 0 }}>
                 {spel.titel}
               </h3>
               <p style={{ fontSize: "0.9rem", margin: "0.4rem 0 0" }}>{spel.info}</p>
-              <span style={{ display: "block", marginTop: "0.5rem", color: "#d9638c", fontWeight: 600 }}>
+              <span style={{ display: "block", marginTop: "0.5rem", color: spel.accent, fontWeight: 600 }}>
                 Speel het spel →
               </span>
             </div>

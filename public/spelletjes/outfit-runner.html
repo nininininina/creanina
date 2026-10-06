@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Outfit Runner 👗</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;overflow:hidden;background:#87ceeb;touch-action:none;}
+canvas{display:block;width:100%;height:100%;}
+#ui{position:absolute;inset:0;pointer-events:none;}
+#hud{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:center;}
+.hud-pill{background:rgba(0,0,0,0.45);border-radius:20px;padding:6px 14px;color:white;font-family:'Arial Rounded MT Bold',Arial,sans-serif;font-size:15px;font-weight:700;display:flex;align-items:center;gap:5px;}
+#msgBox{position:absolute;top:38%;left:50%;transform:translateX(-50%);font-family:'Arial Rounded MT Bold',Arial,sans-serif;font-size:22px;color:white;text-shadow:0 2px 8px rgba(0,0,0,0.7);pointer-events:none;opacity:0;transition:opacity 0.3s;text-align:center;white-space:nowrap;}
+#tapBtn{position:absolute;inset:0;pointer-events:all;cursor:pointer;}
+#startOverlay{position:absolute;inset:0;background:rgba(0,0,0,0.55);display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:all;}
+.so-title{font-family:'Arial Rounded MT Bold',Arial,sans-serif;font-size:32px;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,0.6);margin-bottom:8px;}
+.so-sub{font-family:Arial,sans-serif;font-size:14px;color:#ffe;margin-bottom:24px;text-align:center;max-width:280px;line-height:1.6;}
+.so-btn{background:linear-gradient(135deg,#4caf50,#2e7d32);border:none;border-radius:28px;padding:14px 44px;color:white;font-family:'Arial Rounded MT Bold',Arial,sans-serif;font-size:20px;cursor:pointer;box-shadow:0 4px 18px rgba(76,175,80,0.6);}
+#endOverlay{position:absolute;inset:0;background:rgba(0,0,0,0.7);display:none;flex-direction:column;align-items:center;justify-content:center;pointer-events:all;}
+.end-emoji{font-size:60px;margin-bottom:8px;}
+.end-title{font-family:'Arial Rounded MT Bold',Arial,sans-serif;font-size:28px;color:#ffd700;margin-bottom:6px;}
+.end-sub{font-family:Arial,sans-serif;font-size:14px;color:#ffe;margin-bottom:18px;text-align:center;max-width:280px;line-height:1.5;}
+.end-outfit{font-size:40px;margin-bottom:6px;}
+.end-score{font-family:'Arial Rounded MT Bold',Arial,sans-serif;font-size:18px;color:#4caf50;margin-bottom:18px;}
+.end-btn{background:linear-gradient(135deg,#ff64b4,#c020a0);border:none;border-radius:24px;padding:12px 36px;color:white;font-family:'Arial Rounded MT Bold',Arial,sans-serif;font-size:18px;cursor:pointer;}
+#arrowHint{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:16px;pointer-events:none;}
+.arrow-key{background:rgba(255,255,255,0.25);border:2px solid rgba(255,255,255,0.5);border-radius:10px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:22px;color:white;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div id="hud" style="display:none">
+    <div class="hud-pill">💚 <span id="moneyVal">0</span></div>
+    <div class="hud-pill">👗 <span id="outfitName">Basis</span></div>
+  </div>
+  <div id="msgBox"></div>
+  <div id="tapBtn" style="display:none"></div>
+  <div id="arrowHint" style="display:none">
+    <div class="arrow-key">◀</div>
+    <div class="arrow-key">▶</div>
+  </div>
+
+  <div id="startOverlay">
+    <div style="font-size:64px">👗</div>
+    <div class="so-title">Outfit Runner!</div>
+    <div class="so-sub">
+      Beweeg <b>links/rechts</b> om geld op te rapen 💚<br>
+      Loop door de poorten om outfits te kopen!<br><br>
+      📱 Veeg op het scherm<br>
+      💻 Gebruik ← → pijltjestoetsen
+    </div>
+    <button class="so-btn" onclick="startGame()">▶ Spelen!</button>
+  </div>
+
+  <div id="endOverlay">
+    <div class="end-emoji" id="endEmoji">🏆</div>
+    <div class="end-title" id="endTitle">Gefeliciteerd!</div>
+    <div class="end-outfit" id="endOutfit">👗</div>
+    <div class="end-score" id="endScore">💚 0 geld</div>
+    <div class="end-sub" id="endSub">Je hebt de finish gehaald!</div>
+    <button class="end-btn" onclick="startGame()">🔄 Opnieuw!</button>
+  </div>
+</div>
+
+<script>
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+resize();window.addEventListener('resize',resize);
+
+const OUTFITS=[
+  {name:'Basis',emoji:'🖤',color:'#333',skirtColor:'#222',layers:1,cost:0,gloves:false,crown:false},
+  {name:'Roze',emoji:'🩷',color:'#ff80b0',skirtColor:'#ff40a0',layers:2,cost:25,gloves:false,crown:false},
+  {name:'Blauw',emoji:'💙',color:'#4488ff',skirtColor:'#2255dd',layers:2,cost:45,gloves:false,crown:false},
+  {name:'Paars',emoji:'💜',color:'#aa44ee',skirtColor:'#8822cc',layers:3,cost:75,gloves:true,crown:false},
+  {name:'Goud',emoji:'✨',color:'#ffcc00',skirtColor:'#ee9900',layers:3,cost:110,gloves:true,crown:false},
+  {name:'Koningin',emoji:'👑',color:'#ff2255',skirtColor:'#bb0033',layers:4,cost:160,gloves:true,crown:true},
+];
+
+let state='menu',money=0,outfitIdx=0,playerX=0,playerZ=0;
+let speed=0.0035,coins=[],gates=[],collectAnim=[],finishReached=false;
+let msgTimer=0,inputDir=0,lastTime=0,animRunning=false;
+let pointerStartX=0;
+
+// Controls
+const tapBtn=document.getElementById('tapBtn');
+tapBtn.addEventListener('pointerdown',e=>{pointerStartX=e.clientX;inputDir=0;});
+tapBtn.addEventListener('pointermove',e=>{
+  const dx=e.clientX-pointerStartX;
+  if(dx>15)inputDir=1; else if(dx<-15)inputDir=-1; else inputDir=0;
+});
+tapBtn.addEventListener('pointerup',()=>inputDir=0);
+tapBtn.addEventListener('pointerleave',()=>inputDir=0);
+window.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')inputDir=-1;if(e.key==='ArrowRight')inputDir=1;});
+window.addEventListener('keyup',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight')inputDir=0;});
+
+function generateTrack(){
+  coins=[];gates=[];
+  for(let i=0;i<65;i++){
+    const big=Math.random()<0.18;
+    coins.push({z:0.04+i*0.014,x:(Math.random()-0.5)*1.3,collected:false,value:big?5:1,big});
+  }
+  const gzs=[0.13,0.26,0.39,0.52,0.65,0.78,0.90];
+  gzs.forEach((z,i)=>{
+    const hi=Math.min(i+1,OUTFITS.length-1);
+    const lo=Math.max(0,i);
+    gates.push({z,left:{outfit:hi,price:OUTFITS[hi].cost,x:-0.4},right:{outfit:lo,price:OUTFITS[lo].cost,x:0.4},passed:false,chosen:null});
+  });
+}
+
+function startGame(){
+  document.getElementById('startOverlay').style.display='none';
+  document.getElementById('endOverlay').style.display='none';
+  document.getElementById('hud').style.display='flex';
+  document.getElementById('tapBtn').style.display='block';
+  document.getElementById('arrowHint').style.display='flex';
+  money=0;outfitIdx=0;playerX=0;playerZ=0;speed=0.0035;finishReached=false;
+  generateTrack();updateHUD();state='play';
+  if(!animRunning){animRunning=true;requestAnimationFrame(loop);}
+}
+
+function updateHUD(){
+  document.getElementById('moneyVal').textContent=money;
+  document.getElementById('outfitName').textContent=OUTFITS[outfitIdx].emoji+' '+OUTFITS[outfitIdx].name;
+}
+
+function showMsg(txt){
+  msgTimer=90;
+  const el=document.getElementById('msgBox');
+  el.textContent=txt;el.style.opacity='1';
+}
+
+// ---- WORLD TO SCREEN ----
+function w2s(wx,wz){
+  const W=canvas.width,H=canvas.height;
+  const horizon=H*0.4;
+  const vpY=H*0.96;
+  const p=Math.max(0,(wz-playerZ)/0.55);
+  const sx=W/2+wx*W*0.38*p;
+  const sy=horizon+(vpY-horizon)*(1-Math.pow(Math.max(0,1-p),0.65));
+  const sc=p;
+  return{x:sx,y:sy,sc};
+}
+
+// ---- DRAW SCENE ----
+function drawScene(){
+  const W=canvas.width,H=canvas.height;
+  const horizon=H*0.4;
+
+  // Sky
+  const skyG=ctx.createLinearGradient(0,0,0,horizon);
+  skyG.addColorStop(0,'#1565c0');
+  skyG.addColorStop(1,'#64b5f6');
+  ctx.fillStyle=skyG;ctx.fillRect(0,0,W,horizon);
+
+  // Clouds
+  [[W*.15,horizon*.25,55],[W*.6,horizon*.12,72],[W*.85,horizon*.4,40],[W*.38,horizon*.55,48]].forEach(([cx,cy,r])=>{
+    ctx.save();ctx.globalAlpha=0.9;ctx.fillStyle='white';
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(cx+r*.65,cy+r*.2,r*.65,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(cx-r*.55,cy+r*.15,r*.55,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  });
+
+  // Ground
+  const gndG=ctx.createLinearGradient(0,horizon,0,H);
+  gndG.addColorStop(0,'#e8f5e9');gndG.addColorStop(1,'#a5d6a7');
+  ctx.fillStyle=gndG;ctx.fillRect(0,horizon,W,H-horizon);
+
+  // Track
+  const tw0=W*0.09,tw1=W*0.58;
+  ctx.beginPath();
+  ctx.moveTo(W/2-tw0/2,horizon);ctx.lineTo(W/2+tw0/2,horizon);
+  ctx.lineTo(W/2+tw1/2,H);ctx.lineTo(W/2-tw1/2,H);
+  ctx.closePath();
+  ctx.fillStyle='#f5f5f5';ctx.fill();
+  ctx.strokeStyle='rgba(180,180,180,0.4)';ctx.lineWidth=1;ctx.stroke();
+
+  // Stripes
+  for(let i=0;i<9;i++){
+    const t=((i/9)+(playerZ*4)%1);
+    const y=horizon+(H-horizon)*t;
+    const tw=tw0+(tw1-tw0)*t;
+    ctx.strokeStyle=`rgba(160,160,160,${0.15+t*0.25})`;
+    ctx.lineWidth=Math.max(1,t*4);
+    ctx.beginPath();ctx.moveTo(W/2-tw/2,y);ctx.lineTo(W/2+tw/2,y);ctx.stroke();
+  }
+
+  // Green edges
+  ctx.lineWidth=5;ctx.strokeStyle='#43a047';
+  ctx.beginPath();ctx.moveTo(W/2-tw0/2,horizon);ctx.lineTo(W/2-tw1/2,H);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W/2+tw0/2,horizon);ctx.lineTo(W/2+tw1/2,H);ctx.stroke();
+
+  // Runway lights
+  for(let i=0;i<10;i++){
+    const t=((i/10)+(playerZ*2.5)%1);
+    const y=horizon+(H-horizon)*t;
+    const hw=(tw0+(tw1-tw0)*t)/2+6;
+    const pulse=0.5+0.5*Math.sin(Date.now()*0.004+i*0.7);
+    const r=4+pulse*3;
+    ctx.beginPath();ctx.arc(W/2-hw,y,r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,100,180,${0.5+pulse*0.5})`;ctx.fill();
+    ctx.beginPath();ctx.arc(W/2+hw,y,r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,100,180,${0.5+pulse*0.5})`;ctx.fill();
+  }
+}
+
+// ---- DRAW MODEL ----
+function drawModel(x,y,sc,oi){
+  const o=OUTFITS[oi];
+  const S=sc*Math.min(canvas.width,canvas.height)/420;
+  ctx.save();ctx.translate(x,y);ctx.scale(S,S);
+
+  // Shadow
+  ctx.beginPath();ctx.ellipse(0,90,20*o.layers,7,0,0,Math.PI*2);
+  ctx.fillStyle='rgba(0,0,0,0.18)';ctx.fill();
+
+  // Skirt layers (bottom to top)
+  for(let l=o.layers-1;l>=0;l--){
+    const ly=25+l*20;
+    const lw=50+l*26;
+    const lh=20+l*7;
+    ctx.beginPath();ctx.ellipse(0,ly,lw,lh,0,0,Math.PI*2);
+    ctx.fillStyle=l%2===0?o.skirtColor:o.color;
+    ctx.globalAlpha=1-l*0.06;ctx.fill();ctx.globalAlpha=1;
+  }
+
+  // Body
+  ctx.fillStyle=o.color;
+  ctx.beginPath();ctx.roundRect(-13,-22,26,50,8);ctx.fill();
+
+  // Arms / gloves
+  ctx.fillStyle=o.gloves?'#1a0a04':'#f7c7a0';
+  ctx.beginPath();ctx.roundRect(-24,-12,11,28,5);ctx.fill();
+  ctx.beginPath();ctx.roundRect(13,-12,11,28,5);ctx.fill();
+
+  // Neck
+  ctx.fillStyle='#f7c7a0';
+  ctx.beginPath();ctx.roundRect(-5,-30,10,13,3);ctx.fill();
+
+  // Head
+  ctx.beginPath();ctx.ellipse(0,-44,15,17,0,0,Math.PI*2);
+  ctx.fillStyle='#f7c7a0';ctx.fill();
+
+  // Hair
+  ctx.fillStyle='#b87020';
+  ctx.beginPath();ctx.ellipse(0,-52,15,9,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(-14,-42,5,15,0.2,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(14,-42,5,15,-0.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#8a5010';
+  ctx.beginPath();ctx.roundRect(-3,-50,6,52,3);ctx.fill();
+
+  // Eyes
+  ctx.fillStyle='white';
+  ctx.beginPath();ctx.ellipse(-5.5,-44,3.5,4.5,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(5.5,-44,3.5,4.5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#2a0a2a';
+  ctx.beginPath();ctx.arc(-5.5,-44,2.2,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(5.5,-44,2.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='white';
+  ctx.beginPath();ctx.arc(-4.5,-45,0.9,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(6.5,-45,0.9,0,Math.PI*2);ctx.fill();
+
+  // Mouth & blush
+  ctx.strokeStyle='#c0527a';ctx.lineWidth=1.5;ctx.lineCap='round';
+  ctx.beginPath();ctx.arc(0,-38,4,0.25,Math.PI-0.25);ctx.stroke();
+  ctx.fillStyle='rgba(255,100,150,0.28)';
+  ctx.beginPath();ctx.ellipse(-9,-40,5,3.5,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(9,-40,5,3.5,0,0,Math.PI*2);ctx.fill();
+
+  // Crown
+  if(o.crown){
+    ctx.fillStyle='#ffd700';
+    ctx.beginPath();
+    ctx.moveTo(-11,-60);ctx.lineTo(-8,-72);ctx.lineTo(-1,-65);
+    ctx.lineTo(0,-74);ctx.lineTo(1,-65);ctx.lineTo(8,-72);ctx.lineTo(11,-60);
+    ctx.closePath();ctx.fill();
+    ctx.fillStyle='#ff2255';ctx.beginPath();ctx.arc(0,-72,3.5,0,Math.PI*2);ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+// ---- DRAW GATE ----
+function drawGate(g){
+  const d=g.z-playerZ;
+  if(d<0||d>0.5)return;
+  const W=canvas.width;
+  [{s:g.left,sx:-1},{s:g.right,sx:1}].forEach(({s,sx})=>{
+    const {x:gx,y:gy,sc}=w2s(sx*0.42,g.z);
+    if(sc<=0)return;
+    const o=OUTFITS[s.outfit];
+    const canAfford=money>=s.price;
+    const isBest=s.outfit>outfitIdx;
+    const pw=Math.max(60,120*sc*W/600);
+    const ph=Math.max(50,110*sc*W/600);
+
+    ctx.save();
+    ctx.fillStyle=canAfford?(isBest?o.color:'#888'):'#999';
+    ctx.globalAlpha=0.85;
+    ctx.beginPath();ctx.roundRect(gx-pw/2,gy-ph/2,pw,ph,8*sc);ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.strokeStyle=s.outfit===outfitIdx?'#ffd700':(canAfford&&isBest?'white':'#bbb');
+    ctx.lineWidth=s.outfit===outfitIdx?3:1.5;ctx.stroke();
+
+    // mini model
+    const ms=sc*0.45;
+    drawModel(gx, gy+ph*0.1, ms, s.outfit);
+
+    // Name tag
+    ctx.fillStyle='white';
+    ctx.font=`bold ${Math.max(9,11*sc*W/500)}px Arial`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(o.emoji+' '+o.name, gx, gy-ph/2+12*sc);
+
+    // Price
+    const tagH=18*sc;
+    ctx.fillStyle=canAfford?'#2e7d32':'#c62828';
+    ctx.beginPath();ctx.roundRect(gx-28*sc,gy+ph/2+2*sc,56*sc,tagH,tagH/2);ctx.fill();
+    ctx.fillStyle='white';
+    ctx.font=`bold ${Math.max(8,10*sc*W/500)}px Arial`;
+    ctx.fillText(s.price===0?'GRATIS':'💚'+s.price, gx, gy+ph/2+2*sc+tagH/2);
+    ctx.restore();
+  });
+}
+
+// ---- DRAW COINS ----
+function drawCoin(c){
+  const d=c.z-playerZ;
+  if(d<0||d>0.45)return;
+  const {x,y,sc}=w2s(c.x,c.z);
+  if(sc<=0)return;
+  const W=canvas.width;
+  const r=Math.max(3,(c.big?14:9)*sc*W/500);
+  const pulse=1+0.12*Math.sin(Date.now()*0.005+c.x*8);
+  ctx.save();ctx.translate(x,y);ctx.scale(pulse,pulse);
+  ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);
+  ctx.fillStyle=c.big?'#ffd700':'#4caf50';ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1;ctx.stroke();
+  ctx.fillStyle='rgba(0,0,0,0.35)';
+  ctx.font=`bold ${Math.max(6,r*.9)}px Arial`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(c.value>1?c.value:'$',0,1);
+  ctx.restore();
+}
+
+// ---- COLLECT ANIMS ----
+function drawCollect(){
+  collectAnim=collectAnim.filter(a=>{
+    a.life-=0.035;a.y-=1.5;
+    if(a.life<=0)return false;
+    ctx.save();ctx.globalAlpha=a.life;
+    ctx.font=`bold ${16+a.v}px Arial`;
+    ctx.fillStyle=a.v>1?'#ffd700':'#4caf50';
+    ctx.textAlign='center';ctx.fillText('+'+a.v,a.x,a.y);
+    ctx.restore();return true;
+  });
+}
+
+// ---- FINISH LINE ----
+function drawFinish(){
+  const d=1-playerZ;
+  if(d>0.35)return;
+  const {x:fx,y:fy,sc:fs}=w2s(0,1.0);
+  const W=canvas.width;
+  const fw=240*fs*W/500;
+  ctx.strokeStyle='#ffd700';ctx.lineWidth=5*fs;
+  ctx.beginPath();ctx.moveTo(fx-fw/2,fy);ctx.lineTo(fx+fw/2,fy);ctx.stroke();
+  ctx.fillStyle='#ffd700';
+  ctx.font=`bold ${Math.max(14,22*fs)}px Arial`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('🏁 FINISH!',fx,fy-18*fs);
+}
+
+// ---- MAIN LOOP ----
+function loop(ts){
+  if(!animRunning)return;
+  const dt=Math.min((ts-lastTime)/16.67,3);lastTime=ts;
+
+  if(state==='play'){
+    playerX=Math.max(-0.62,Math.min(0.62,playerX+inputDir*0.03*dt));
+    playerZ=Math.min(1,playerZ+speed*dt);
+    speed=Math.min(0.008,speed+0.000006*dt);
+
+    coins.forEach(c=>{
+      if(c.collected)return;
+      if(Math.abs(c.z-playerZ)<0.026&&Math.abs(c.x-playerX)<0.19){
+        c.collected=true;money+=c.value;
+        const{x,y}=w2s(c.x,c.z);
+        collectAnim.push({x,y,v:c.value,life:1});
+        updateHUD();
+      }
+    });
+
+    gates.forEach(g=>{
+      if(g.passed)return;
+      if(playerZ>g.z+0.015){g.passed=true;return;}
+      if(Math.abs(g.z-playerZ)<0.028&&g.chosen===null){
+        const s=playerX<0?g.left:g.right;
+        g.chosen=s;
+        if(s.outfit>outfitIdx){
+          if(money>=s.price){
+            money-=s.price;outfitIdx=s.outfit;
+            showMsg(OUTFITS[outfitIdx].emoji+' '+OUTFITS[outfitIdx].name+' gekocht! 🎉');
+            updateHUD();
+          } else {
+            showMsg('Niet genoeg geld! 💚 Raap meer op!');
+          }
+        }
+      }
+    });
+
+    if(playerZ>=0.99&&!finishReached){finishReached=true;setTimeout(showEnd,700);}
+    if(msgTimer>0){msgTimer-=dt;if(msgTimer<=0)document.getElementById('msgBox').style.opacity='0';}
+  }
+
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  drawScene();
+
+  // Draw gates (far to near)
+  [...gates].sort((a,b)=>b.z-a.z).forEach(g=>{if(!g.passed)drawGate(g);});
+
+  // Coins
+  coins.filter(c=>!c.collected).sort((a,b)=>a.z-b.z).forEach(drawCoin);
+
+  drawFinish();
+
+  // Player
+  const{x:px,y:py,sc:ps}=w2s(playerX,playerZ+0.04);
+  drawModel(px,py,Math.max(0.5,ps),outfitIdx);
+
+  drawCollect();
+  requestAnimationFrame(loop);
+}
+
+function showEnd(){
+  state='end';
+  document.getElementById('tapBtn').style.display='none';
+  document.getElementById('arrowHint').style.display='none';
+  const o=OUTFITS[outfitIdx];
+  let emoji,title,sub;
+  if(outfitIdx===OUTFITS.length-1){emoji='👑';title='Je bent de Koningin!';sub='Perfecte outfit! Jij hebt gewonnen! Iedereen kijkt naar jou! 🎉';}
+  else if(outfitIdx>=4){emoji='🌟';title='Geweldig!';sub='Super mooie outfit! Volgende keer pak je de kroon! ✨';}
+  else if(outfitIdx>=2){emoji='👗';title='Goed gedaan!';sub='Leuke outfit! Raap meer geld op voor een betere jurk! 💪';}
+  else{emoji='😊';title='Blijf oefenen!';sub='Raap zoveel mogelijk groene biljetten op voor betere outfits! 💚';}
+  document.getElementById('endEmoji').textContent=emoji;
+  document.getElementById('endTitle').textContent=title;
+  document.getElementById('endOutfit').textContent=o.emoji;
+  document.getElementById('endScore').textContent='💚 '+money+' over | Outfit: '+o.name;
+  document.getElementById('endSub').textContent=sub;
+  document.getElementById('endOverlay').style.display='flex';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokemon Avontuur - Simpel & Werkend!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #startScreen {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+        }
+
+        #startScreen h1 {
+            color: #ff6b6b;
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        #startScreen input {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        #startScreen button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        #startScreen button:hover {
+            transform: scale(1.05);
+        }
+
+        #gameContainer {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+            width: 1000px;
+        }
+
+        #gameHeader {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #gameArea {
+            display: flex;
+            height: 600px;
+        }
+
+        #world {
+            flex: 2;
+            position: relative;
+            overflow: hidden;
+            background: 
+                linear-gradient(180deg, 
+                    #87CEEB 0%, 
+                    #B8E6B8 30%,
+                    #90C896 60%,
+                    #7CB77E 100%
+                );
+        }
+
+        #worldInner {
+            position: absolute;
+            width: 2000px;
+            height: 2000px;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(0,0,0,0.03) 40px, rgba(0,0,0,0.03) 80px),
+                repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(0,0,0,0.03) 40px, rgba(0,0,0,0.03) 80px);
+        }
+
+        .tree {
+            position: absolute;
+            width: 60px;
+            height: 80px;
+            background: linear-gradient(180deg, #2d5016 0%, #4a7c2b 50%, #2d5016 100%);
+            border-radius: 50% 50% 0 0;
+        }
+
+        .tree::before {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 22px;
+            width: 16px;
+            height: 20px;
+            background: #5d4037;
+        }
+
+        .rock {
+            position: absolute;
+            width: 40px;
+            height: 30px;
+            background: #757575;
+            border-radius: 20% 20% 40% 40%;
+        }
+
+        .flower {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #e91e63;
+            border-radius: 50%;
+        }
+
+        .flower::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: #fdd835;
+            border-radius: 50%;
+        }
+
+        #player {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            z-index: 100;
+            left: 310px;
+            top: 280px;
+        }
+
+        #player::before {
+            content: '😊';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+        }
+
+        .pokemon {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 50;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(255,215,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: float 2s ease-in-out infinite;
+        }
+
+        .pokemon img {
+            width: 60px;
+            height: 60px;
+        }
+
+        .pokemon:hover {
+            transform: scale(1.2);
+            box-shadow: 0 6px 20px rgba(255,215,0,0.8);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        #sidebar {
+            flex: 1;
+            background: #f5f5f5;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .pokemon-card {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pokemon-card img {
+            width: 50px;
+            height: 50px;
+        }
+
+        #battleScreen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+            z-index: 1000;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 40px;
+        }
+
+        .battle-pokemon {
+            text-align: center;
+        }
+
+        .battle-pokemon img {
+            width: 200px;
+            height: 200px;
+        }
+
+        .battle-pokemon .name {
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            margin: 10px 0;
+            text-transform: capitalize;
+        }
+
+        .health-bar {
+            width: 300px;
+            height: 30px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 15px;
+            margin: 10px auto;
+            overflow: hidden;
+            border: 3px solid white;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: #4caf50;
+            transition: width 0.5s;
+        }
+
+        #battleLog {
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 18px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .battle-button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 20px 40px;
+            font-size: 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px;
+        }
+
+        .battle-button:hover {
+            transform: scale(1.1);
+        }
+
+        #instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="startScreen">
+        <h1>🌲 Pokemon Avontuur!</h1>
+        <p style="font-size: 18px; margin: 20px 0;">Klaar voor een avontuur?</p>
+        <input type="text" id="trainerName" placeholder="Jouw naam?" maxlength="15">
+        <br>
+        <button onclick="startGame()">Start! 🚀</button>
+    </div>
+
+    <div id="gameContainer">
+        <div id="gameHeader">
+            <div id="trainerInfo"></div>
+            <div>
+                <span>Pokemon: <span id="pokemonCount">0</span></span> | 
+                <span>Pokeballs: <span id="pokeballCount">10</span></span>
+            </div>
+        </div>
+
+        <div id="gameArea">
+            <div id="world">
+                <div id="worldInner"></div>
+                <div id="player"></div>
+            </div>
+
+            <div id="sidebar">
+                <div id="instructions">
+                    <strong>🎮 Besturing</strong><br>
+                    ⬆️⬇️⬅️➡️ = Lopen<br>
+                    🎯 Klik Pokemon = Vangen!
+                </div>
+                <h3>Mijn Pokemon</h3>
+                <div id="pokemonList"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="battleScreen">
+        <div class="battle-pokemon">
+            <img id="enemyImg" src="">
+            <div class="name" id="enemyName"></div>
+            <div class="health-bar">
+                <div class="health-fill" id="enemyHealth"></div>
+            </div>
+        </div>
+
+        <div id="battleLog">Een wilde Pokemon!</div>
+
+        <div style="text-align: center;">
+            <button class="battle-button" onclick="attackPokemon()">⚔️ Aanval</button>
+            <button class="battle-button" onclick="catchPokemon()">🎯 Vang</button>
+            <button class="battle-button" onclick="runAway()">🏃 Vlucht</button>
+        </div>
+
+        <div class="battle-pokemon">
+            <div class="health-bar">
+                <div class="health-fill" id="playerHealth"></div>
+            </div>
+            <div class="name" id="playerName"></div>
+            <img id="playerImg" src="">
+        </div>
+    </div>
+
+    <script>
+        const POKEMON_IDS = [1,4,7,25,39,133,143,147,149,54,79,104,115,132,19,23];
+        
+        let game = {
+            name: '',
+            team: [],
+            pokeballs: 10,
+            worldX: -700,
+            worldY: -700,
+            keys: {},
+            battle: null,
+            pokemons: []
+        };
+
+        async function loadPokemon(id) {
+            try {
+                const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+                const data = await res.json();
+                return {
+                    id: id,
+                    name: data.name,
+                    image: data.sprites.front_default,
+                    types: data.types.map(t => t.type.name)
+                };
+            } catch {
+                return null;
+            }
+        }
+
+        function startGame() {
+            const name = document.getElementById('trainerName').value.trim();
+            if (!name) {
+                alert('Vul je naam in!');
+                return;
+            }
+
+            game.name = name;
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameContainer').style.display = 'block';
+            document.getElementById('trainerInfo').textContent = `Trainer: ${name}`;
+
+            createWorld();
+            spawnPokemon();
+            
+            // Zet wereld op juiste positie
+            const world = document.getElementById('worldInner');
+            world.style.transform = `translate(${game.worldX}px, ${game.worldY}px)`;
+            
+            // Starter
+            loadPokemon(25).then(p => {
+                if (p) {
+                    game.team.push({...p, level: 5});
+                    updateUI();
+                }
+            });
+
+            // Keyboard
+            document.addEventListener('keydown', (e) => {
+                game.keys[e.key] = true;
+                move();
+            });
+
+            document.addEventListener('keyup', (e) => {
+                game.keys[e.key] = false;
+            });
+
+            updateUI();
+        }
+
+        function createWorld() {
+            const world = document.getElementById('worldInner');
+            
+            // Bomen
+            for (let i = 0; i < 50; i++) {
+                const tree = document.createElement('div');
+                tree.className = 'tree';
+                tree.style.left = (Math.random() * 1900) + 'px';
+                tree.style.top = (Math.random() * 1900) + 'px';
+                world.appendChild(tree);
+            }
+
+            // Rotsen
+            for (let i = 0; i < 30; i++) {
+                const rock = document.createElement('div');
+                rock.className = 'rock';
+                rock.style.left = (Math.random() * 1950) + 'px';
+                rock.style.top = (Math.random() * 1950) + 'px';
+                world.appendChild(rock);
+            }
+
+            // Bloemen
+            for (let i = 0; i < 60; i++) {
+                const flower = document.createElement('div');
+                flower.className = 'flower';
+                flower.style.left = (Math.random() * 1970) + 'px';
+                flower.style.top = (Math.random() * 1970) + 'px';
+                world.appendChild(flower);
+            }
+        }
+
+        function spawnPokemon() {
+            const world = document.getElementById('worldInner');
+            
+            for (let i = 0; i < 25; i++) {
+                const id = POKEMON_IDS[Math.floor(Math.random() * POKEMON_IDS.length)];
+                
+                const poke = document.createElement('div');
+                poke.className = 'pokemon';
+                poke.innerHTML = `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png">`;
+                poke.style.left = (Math.random() * 1900) + 'px';
+                poke.style.top = (Math.random() * 1900) + 'px';
+                poke.dataset.id = id;
+                
+                poke.onclick = () => {
+                    loadPokemon(id).then(p => {
+                        if (p) startBattle(p, poke);
+                    });
+                };
+                
+                world.appendChild(poke);
+                game.pokemons.push(poke);
+            }
+        }
+
+        function move() {
+            const speed = 15;
+            const world = document.getElementById('worldInner');
+            
+            // OMGEKEERD! Als je omhoog drukt, moet de wereld naar beneden
+            if (game.keys['ArrowUp']) game.worldY = Math.min(0, game.worldY + speed);
+            if (game.keys['ArrowDown']) game.worldY = Math.max(-1400, game.worldY - speed);
+            if (game.keys['ArrowLeft']) game.worldX = Math.min(0, game.worldX + speed);
+            if (game.keys['ArrowRight']) game.worldX = Math.max(-1400, game.worldX - speed);
+            
+            world.style.transform = `translate(${game.worldX}px, ${game.worldY}px)`;
+            
+            if (Math.random() < 0.02) {
+                const id = POKEMON_IDS[Math.floor(Math.random() * POKEMON_IDS.length)];
+                loadPokemon(id).then(p => {
+                    if (p) startBattle(p);
+                });
+            }
+        }
+
+        function startBattle(poke, element) {
+            game.battle = {
+                pokemon: poke,
+                health: 100,
+                playerHealth: 100,
+                element: element
+            };
+
+            document.getElementById('battleScreen').style.display = 'flex';
+            document.getElementById('enemyImg').src = poke.image;
+            document.getElementById('enemyName').textContent = poke.name;
+            document.getElementById('battleLog').textContent = `Een wilde ${poke.name}!`;
+            document.getElementById('enemyHealth').style.width = '100%';
+            
+            if (game.team.length > 0) {
+                document.getElementById('playerImg').src = game.team[0].image;
+                document.getElementById('playerName').textContent = game.team[0].name;
+            }
+            document.getElementById('playerHealth').style.width = '100%';
+        }
+
+        function attackPokemon() {
+            const damage = 20 + Math.floor(Math.random() * 30);
+            game.battle.health -= damage;
+            document.getElementById('enemyHealth').style.width = game.battle.health + '%';
+            document.getElementById('battleLog').textContent = `${damage} schade!`;
+            
+            if (game.battle.health <= 0) {
+                setTimeout(() => {
+                    document.getElementById('battleLog').textContent = 'Verslagen!';
+                    setTimeout(endBattle, 1000);
+                }, 500);
+                return;
+            }
+            
+            setTimeout(() => {
+                const enemyDamage = 15 + Math.floor(Math.random() * 20);
+                game.battle.playerHealth -= enemyDamage;
+                document.getElementById('playerHealth').style.width = game.battle.playerHealth + '%';
+                document.getElementById('battleLog').textContent = `${game.battle.pokemon.name} doet ${enemyDamage} schade!`;
+            }, 1000);
+        }
+
+        function catchPokemon() {
+            if (game.pokeballs <= 0) {
+                document.getElementById('battleLog').textContent = 'Geen Pokeballs meer!';
+                return;
+            }
+            
+            game.pokeballs--;
+            const chance = (100 - game.battle.health) / 100;
+            
+            if (Math.random() < chance) {
+                document.getElementById('battleLog').textContent = `${game.battle.pokemon.name} gevangen! 🎉`;
+                game.team.push({...game.battle.pokemon, level: Math.floor(Math.random() * 10) + 1});
+                
+                if (game.battle.element) {
+                    game.battle.element.remove();
+                }
+                
+                setTimeout(() => {
+                    endBattle();
+                    updateUI();
+                }, 1500);
+            } else {
+                document.getElementById('battleLog').textContent = 'Brak vrij!';
+                updateUI();
+            }
+        }
+
+        function runAway() {
+            endBattle();
+        }
+
+        function endBattle() {
+            document.getElementById('battleScreen').style.display = 'none';
+            game.battle = null;
+        }
+
+        function updateUI() {
+            document.getElementById('pokemonCount').textContent = game.team.length;
+            document.getElementById('pokeballCount').textContent = game.pokeballs;
+            
+            const list = document.getElementById('pokemonList');
+            list.innerHTML = '';
+            
+            if (game.team.length === 0) {
+                list.innerHTML = '<p style="color: #999;">Nog geen Pokemon...</p>';
+            } else {
+                game.team.forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = 'pokemon-card';
+                    card.innerHTML = `
+                        <div>
+                            <div style="font-weight:bold; text-transform:capitalize;">${p.name}</div>
+                            <div style="font-size:12px; color:#666;">Level ${p.level}</div>
+                        </div>
+                        <img src="${p.image}">
+                    `;
+                    list.appendChild(card);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
