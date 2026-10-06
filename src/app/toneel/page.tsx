@@ -1,66 +1,34 @@
 import Link from "next/link";
+import { internetToneeltjes, eigenToneeltjes, Plaatje } from "./data";
 
-// Hier staan alle toneeltjes.
-// Een regel die begint met "(" is wat de spelers DOEN.
-// Een regel zoals "KAT: Hallo!" is wat iemand ZEGT.
-const toneeltjes = [
-  {
-    titel: "De pizza die wegrolde",
-    spelers: "3 spelers: Bakker, Klant, Pizza",
-    regels: [
-      "(De bakker haalt een pizza uit de oven.)",
-      "BAKKER: Klaar! De lekkerste pizza van de hele stad.",
-      "KLANT: Mmm, die neem ik!",
-      "PIZZA: Ho maar! Ik word niet opgegeten. Ik ga op wereldreis!",
-      "(De pizza rolt weg.)",
-      "BAKKER: Kom terug! Je bent nog warm!",
-      "PIZZA: Daarom ga ik naar de Noordpool. Even afkoelen.",
-      "KLANT: Maar ik heb honger!",
-      "PIZZA: Neem dan een boterham. Die rollen niet weg.",
-      "(De klant pakt een boterham. De boterham begint te wiebelen.)",
-      "KLANT: Eh… bakker? Mijn boterham beweegt.",
-      "BAKKER: O nee. Niet weer!",
-      "(Ze rennen allebei achter het eten aan.)",
-    ],
-  },
-  {
-    titel: "De kat die koning wilde zijn",
-    spelers: "2 spelers: Kat, Muis",
-    regels: [
-      "KAT: Muis! Vanaf vandaag ben ik de koning van het huis.",
-      "MUIS: O ja? Waar is je kroon dan?",
-      "KAT: (zoekt overal) Eh… die ligt nog in de wasmand.",
-      "MUIS: Een koning zonder kroon is gewoon een kat.",
-      "KAT: Dan maak ik er een! (zet een bakje op zijn hoofd)",
-      "MUIS: Dat is je etensbakje.",
-      "KAT: Het is een etensbakje-kroon. Heel deftig.",
-      "MUIS: Goed, koning Kat. Wat is je eerste bevel?",
-      "KAT: Iedereen moet de hele dag slapen.",
-      "MUIS: Dat doe jij toch al.",
-      "KAT: Precies. Ik ben een héél goede koning.",
-      "(De kat valt in slaap. De muis pakt stilletjes het bakje en zet het op haar eigen hoofd.)",
-      "MUIS: Lang leve koningin Muis!",
-    ],
-  },
-  {
-    titel: "De spiegel die alles nadeed",
-    spelers: "2 spelers: Kind, Spiegel",
-    regels: [
-      "(Het kind staat voor de spiegel. De spiegel doet alles na.)",
-      "KIND: (zwaait) Hallo!",
-      "SPIEGEL: (zwaait) Hallo!",
-      "KIND: (krabt op het hoofd) Hé, jij doet mij na.",
-      "SPIEGEL: (krabt op het hoofd) Hé, jij doet mij na.",
-      "KIND: Nietes!",
-      "SPIEGEL: Welles!",
-      "(Het kind steekt de tong uit. De spiegel ook.)",
-      "KIND: Oké. Ik weet iets wat jij niet kan nadoen.",
-      "(Het kind draait zich om en loopt weg.)",
-      "SPIEGEL: (kijkt verward rond) Eh… wacht! Waar ga je heen?",
-      "SPIEGEL: (tegen het publiek) Help! Wat moet ik nu doen?",
-    ],
-  },
-];
+const kaartStijl = {
+  display: "flex",
+  flexDirection: "column" as const,
+  border: "2px solid #eee3a8",
+  borderRadius: "14px",
+  textDecoration: "none",
+  color: "inherit",
+  background: "#fff",
+};
+
+const rasterStijl = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(14rem, 1fr))",
+  gap: "1.25rem",
+  width: "100%",
+  marginTop: "1.5rem",
+};
+
+function KaartTekst({ titel, info, inhoud, knop }: { titel: string; info: string; inhoud: string; knop: string }) {
+  return (
+    <div style={{ padding: "0.9rem 1rem 1rem", display: "flex", flexDirection: "column", gap: "0.4rem", flex: 1 }}>
+      <h3 style={{ color: "#a8961f", fontSize: "1.15rem", lineHeight: 1.25 }}>{titel}</h3>
+      <p style={{ fontSize: "0.85rem", color: "#777" }}>{info}</p>
+      <p style={{ fontSize: "0.95rem" }}>{inhoud}</p>
+      <span style={{ marginTop: "auto", paddingTop: "0.5rem", color: "#c9b536", fontWeight: 600 }}>{knop}</span>
+    </div>
+  );
+}
 
 export default function ToneelPage() {
   return (
@@ -72,45 +40,32 @@ export default function ToneelPage() {
         marginTop: "2rem",
         marginInline: "auto",
         paddingInline: "1rem",
-        maxWidth: "36rem",
+        maxWidth: "40rem",
         lineHeight: 1.6,
       }}
     >
       <h1 style={{ color: "#c9b536" }}>Toneel</h1>
-      <p style={{ textAlign: "center" }}>
-        Korte toneeltjes om zelf te spelen, voor jong en oud!
-      </p>
+      <p style={{ textAlign: "center" }}>Klik op een toneeltje om het te bekijken!</p>
 
-      {toneeltjes.map((stuk) => (
-        <section key={stuk.titel} style={{ marginTop: "2.5rem", width: "100%" }}>
-          <h2 style={{ color: "#c9b536", textAlign: "center" }}>
-            {stuk.titel}
-          </h2>
-          <p style={{ textAlign: "center", fontStyle: "italic", color: "#777" }}>
-            {stuk.spelers}
-          </p>
+      <h2 style={{ color: "#c9b536", marginTop: "2rem" }}>Mijn eigen toneeltjes</h2>
+      <div style={rasterStijl}>
+        {eigenToneeltjes.map((stuk) => (
+          <Link key={stuk.naam} href={"/toneel/" + stuk.naam} style={kaartStijl}>
+            <Plaatje soort={stuk.plaatje} />
+            <KaartTekst titel={stuk.titel} info={stuk.spelers} inhoud={stuk.inhoud} knop="Lees het toneeltje →" />
+          </Link>
+        ))}
+      </div>
 
-          <div style={{ marginTop: "1rem" }}>
-            {stuk.regels.map((regel, i) => {
-              // Wat de spelers doen: schuin en grijs
-              if (regel.startsWith("(")) {
-                return (
-                  <p key={i} style={{ fontStyle: "italic", color: "#777" }}>
-                    {regel}
-                  </p>
-                );
-              }
-              // Wat iemand zegt: de naam in kleur
-              const [rol, ...rest] = regel.split(": ");
-              return (
-                <p key={i}>
-                  <b style={{ color: "#a8961f" }}>{rol}:</b> {rest.join(": ")}
-                </p>
-              );
-            })}
-          </div>
-        </section>
-      ))}
+      <h2 style={{ color: "#c9b536", marginTop: "3rem" }}>Toneeltjes van internet</h2>
+      <div style={rasterStijl}>
+        {internetToneeltjes.map((stuk) => (
+          <a key={stuk.titel} href={stuk.link} target="_blank" rel="noopener noreferrer" style={kaartStijl}>
+            <Plaatje soort={stuk.plaatje} />
+            <KaartTekst titel={stuk.titel} info={"door " + stuk.schrijver + " · " + stuk.info} inhoud={stuk.inhoud} knop="Bekijk het toneeltje →" />
+          </a>
+        ))}
+      </div>
 
       <Link href="/" style={{ marginTop: "2.5rem", marginBottom: "2rem" }}>
         ← terug naar de homepagina
