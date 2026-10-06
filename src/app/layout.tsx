@@ -10,7 +10,8 @@ const greatVibes = Great_Vibes({
 
 export const metadata: Metadata = {
   title: "Creanina",
-  description: "Creanina",
+  description:
+    "Creanina is de creatieve website van Nina, met dans, eten, toneel, knutselen en tekenen.",
 };
 
 export default function RootLayout({
