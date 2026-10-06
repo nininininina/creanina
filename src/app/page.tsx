@@ -12,6 +12,16 @@ export default function Home() {
         marginInline: "auto",
       }}
     >
+      {/* Het logo: een zachte regenboog boven de naam */}
+      <svg width="150" height="80" viewBox="36 54 188 100" aria-hidden="true" style={{ marginBottom: "-0.75rem" }}>
+        <g fill="none" strokeWidth="8" strokeLinecap="round">
+          <path d="M40 150 A90 90 0 0 1 220 150" stroke="#d98c8c" />
+          <path d="M52 150 A78 78 0 0 1 208 150" stroke="#e0b388" />
+          <path d="M64 150 A66 66 0 0 1 196 150" stroke="#d9d18c" />
+          <path d="M76 150 A54 54 0 0 1 184 150" stroke="#9cc99c" />
+          <path d="M88 150 A42 42 0 0 1 172 150" stroke="#8cb3d9" />
+        </g>
+      </svg>
       <h1
         style={{
           fontFamily: "var(--font-brand)",
